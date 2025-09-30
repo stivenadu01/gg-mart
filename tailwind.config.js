@@ -1,6 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{php,html,js}"],
+  content: [
+    "./src/**/*.{php,html,js}"
+  ],
+  safelist: [
+    {
+      pattern: /^(m|ml|mr|mt|mb)-(14|16|64|px)$/,
+    },
+  ],
   theme: {
     extend: {
       colors: {

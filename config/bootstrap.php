@@ -21,5 +21,9 @@ date_default_timezone_set("Asia/Makassar"); // ubah sesuai zona waktu
 define('APP_NAME', $_ENV['APP_NAME'] ?? 'My App');
 define('BASE_URL', rtrim($_ENV['BASE_URL'] ?? '', '/'));
 define('ROOT_PATH', __DIR__ . "/../");
+define('ASSETS_PATH', BASE_URL . '/assets');
+define('IMG_PATH', BASE_URL . '/assets/img');
+define("COMPONENTS_PATH", ROOT_PATH . '/src/components');
 
 // 6.functions
+require_once ROOT_PATH . '/helpers/functions.php';

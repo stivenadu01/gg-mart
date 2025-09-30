@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$pageTitle = "Home";
+include COMPONENTS_PATH . '/header.php';
+?>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/main.css">
-  <title>Home</title>
-</head>
+<h1 class="text-2xl font-bold">Main Content</h1>
 
-<body>
-  <h1>HOME</h1>
 
-</body>
+<p class="mt-4">Ini area konten utama kamu...</p>
 
-</html>
+<?php
+include COMPONENTS_PATH . '/footer.php';

@@ -3,6 +3,7 @@
     "tailwindcss": "3"
   },
   "scripts": {
-    "dev" : "npx tailwindcss -i ./src/input.css -o ./public/assets/css/main.css --watch"
+    "css:build": "tailwindcss -i ./src/input.css -o ./public/assets/css/app.css --minify",
+    "css:watch": "tailwindcss -i ./src/input.css -o ./public/assets/css/app.css --watch"
   }
 }
