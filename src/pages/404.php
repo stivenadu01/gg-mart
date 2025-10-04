@@ -1,4 +1,10 @@
-<div class="flex items-center justify-center min-h-screen text-center px-4 sm:px-6 lg:px-8">
+<?php
+$pageTitle = "404";
+include COMPONENTS_PATH . '/header.php';
+?>
+
+
+<div class="flex items-center justify-center text-center px-4 sm:px-6 lg:px-8">
   <div class="max-w-md mx-auto">
     <h1 class="text-9xl font-extrabold text-green-700 animate-pulse">404</h1>
     <p class="mt-4 text-3xl font-bold text-gray-800">Ups, Halaman tidak ditemukan!</p>
@@ -22,3 +28,7 @@
     </p>
   </div>
 </div>
+
+
+<?php
+include COMPONENTS_PATH . '/footer.php';

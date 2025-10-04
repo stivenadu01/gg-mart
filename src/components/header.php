@@ -15,10 +15,19 @@
   x-data="{ sidebarOpen: false, sidebarCollapse: false }">
 
   <?php
-  include COMPONENTS_PATH . '/sidebar.php';
-  include COMPONENTS_PATH . '/navbar.php';
-  ?>
 
-  <!-- KONTEN -->
-  <main class="flex-1 overflow-y-auto p-6 lg:ml-64"
-    :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'">
+  include COMPONENTS_PATH . '/navbar.php';
+
+  if (isAdmin()):
+    include COMPONENTS_PATH . '/sidebar.php';
+  ?>
+    <!-- KONTEN ADMIN -->
+
+    <main class="flex-1 overflow-y-auto p-6 lg:ml-64"
+      :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'">
+    <?php
+  else:
+    ?>
+      <main class="flex-1 overflow-y-auto p-6">
+      <?php
+    endif;

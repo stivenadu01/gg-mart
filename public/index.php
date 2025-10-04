@@ -5,8 +5,6 @@ $page = $_GET['page'] ?? 'home';
 $page = rtrim($page, '/');
 $pageFile = ROOT_PATH . '/src/pages/' . $page . '.php';
 
-set_flash('Welcome to GG_MART!', 'success', 'You have successfully logged in.');
-
 if (file_exists($pageFile)) {
   // Jika ada file langsung
   include $pageFile;

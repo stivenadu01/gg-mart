@@ -1,4 +1,3 @@
-<!-- SIDEBAR DESKTOP -->
 <aside
   :class="sidebarCollapse ? 'w-16' : 'w-64'"
   class="w-16 hidden lg:flex flex-col bg-white border-r shadow-md transition-all duration-300 fixed inset-y-0 left-0 z-30">
@@ -33,7 +32,7 @@
 
   <!-- Menu -->
   <nav class="flex-1 p-2 space-y-2">
-    <a href="#" class="flex items-center p-2 rounded hover:bg-gray-200">
+    <a href="<?= url('admin/dashboard') ?>" class="flex items-center p-2 rounded hover:bg-gray-200">
       <!-- Heroicons - Cube -->
       <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
         viewBox="0 0 24 24" stroke="currentColor">
@@ -43,7 +42,7 @@
 
       <span x-show="!sidebarCollapse" class="ml-3">Dashboard</span>
     </a>
-    <a href="#" class="flex items-center p-2 rounded hover:bg-gray-200">
+    <a href="<?= url('admin/produk') ?>" class="flex items-center p-2 rounded hover:bg-gray-200">
       <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
         viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -54,6 +53,7 @@
     </a>
   </nav>
 </aside>
+
 
 <!-- SIDEBAR MOBILE OVERLAY -->
 <div
@@ -75,8 +75,8 @@
       </button>
     </div>
     <nav class="flex-1 p-2 space-y-2">
-      <a href="#" class="block p-2 rounded hover:bg-gray-200">Dashboard</a>
-      <a href="#" class="block p-2 rounded hover:bg-gray-200">Kelola Produk</a>
+      <a href="<?= url('admin/dashboard') ?>" class="block p-2 rounded hover:bg-gray-200">Dashboard</a>
+      <a href="<?= url('admin/produk') ?>" class="block p-2 rounded hover:bg-gray-200">Kelola Produk</a>
     </nav>
   </aside>
 </div>
