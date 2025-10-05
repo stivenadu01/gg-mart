@@ -16,18 +16,9 @@
 
   <?php
 
-  include COMPONENTS_PATH . '/navbar.php';
+  include COMPONENTS_PATH . '/admin/navbar.php';
 
-  if (isAdmin()):
-    include COMPONENTS_PATH . '/sidebar.php';
+  include COMPONENTS_PATH . '/admin/sidebar.php';
   ?>
-    <!-- KONTEN ADMIN -->
-
-    <main class="flex-1 overflow-y-auto p-6 lg:ml-64"
-      :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'">
-    <?php
-  else:
-    ?>
-      <main class="flex-1 overflow-y-auto p-6">
-      <?php
-    endif;
+  <main class="flex-1 overflow-y-auto p-6 lg:ml-64"
+    :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'">

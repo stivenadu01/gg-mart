@@ -68,21 +68,46 @@ function hapusProduk($kode)
 }
 
 
-function searchProduk($query)
+function getFilteredProduk($q = '', $urutkan = 'sesuai')
 {
   $conn = get_db_connection();
-  $likeQuery = '%' . $conn->real_escape_string($query) . '%';
-  $stmt = $conn->prepare("SELECT * FROM produk WHERE nama_produk LIKE ? OR deskripsi LIKE ?");
-  $stmt->bind_param("ss", $likeQuery, $likeQuery);
-  $stmt->execute();
-  $result = $stmt->get_result();
+
+  // Query dasar
+  $sql = "SELECT * FROM produk WHERE 1";
+
+  // 🔍 Filter pencarian (nama/deskripsi)
+  if (!empty($q)) {
+    $q_safe = mysqli_real_escape_string($conn, $q);
+    $sql .= " AND (nama_produk LIKE '%$q_safe%' OR deskripsi LIKE '%$q_safe%')";
+  }
+
+  // 🔽 Urutkan berdasarkan pilihan
+  switch ($urutkan) {
+    case 'termahal':
+      $sql .= " ORDER BY harga DESC";
+      break;
+    case 'termurah':
+      $sql .= " ORDER BY harga ASC";
+      break;
+    case 'terlaris':
+      $sql .= " ORDER BY terjual DESC";
+      break;
+    case 'terbaru':
+      $sql .= " ORDER BY created_at DESC";
+      break;
+    default:
+      $sql .= " ORDER BY kode_produk DESC";
+      break;
+  }
+
+  // Jalankan query
+  $result = $conn->query($sql);
   $produk = [];
-  if ($result->num_rows > 0) {
+  if ($result) {
     while ($row = $result->fetch_assoc()) {
       $produk[] = $row;
     }
   }
-  $stmt->close();
-  $conn->close();
+
   return $produk;
 }

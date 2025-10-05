@@ -1,7 +1,7 @@
 <?php
 $pageTitle = "Dashboard Admin";
-include COMPONENTS_PATH . '/header.php';
+include COMPONENTS_PATH . '/admin/header.php';
 ?>
 <h1>Dashboard Admin</h1>
 <?php
-include COMPONENTS_PATH . '/footer.php';
+include COMPONENTS_PATH . '/admin/footer.php';

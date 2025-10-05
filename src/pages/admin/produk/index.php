@@ -9,7 +9,7 @@ if ($searchQuery) {
   $produkList = getAllProduk();
 }
 $pageTitle = "Kelola Produk - Admin";
-include COMPONENTS_PATH . '/header.php';
+include COMPONENTS_PATH . '/admin/header.php';
 ?>
 
 <div class="p-8 bg-gray-50 min-h-screen">
@@ -48,6 +48,7 @@ include COMPONENTS_PATH . '/header.php';
                     <th class="p-3 text-left text-sm font-medium min-w-64 bg-blue-50">Produk</th>
                     <th class="p-3 text-left text-sm font-medium bg-blue-50">Harga</th>
                     <th class="p-3 text-center text-sm font-medium bg-blue-50">Stok</th>
+                    <th class="p-3 text-center text-sm font-medium bg-blue-50">Tejual</th>
                     <th class="p-3 text-left text-sm font-medium hidden md:table-cell bg-blue-50">Deskripsi</th>
                     <th class="p-3 text-center text-sm font-medium bg-blue-50">Izin Edar</th>
                     <th class="p-3 text-center text-sm font-medium bg-blue-50">Aksi</th>
@@ -72,6 +73,9 @@ include COMPONENTS_PATH . '/header.php';
                       </td>
                       <td class="p-3 text-center">
                         <?= (int)$p['stok'] ?>
+                      </td>
+                      <td class="p-3 text-center">
+                        <?= (int)$p['terjual'] ?>
                       </td>
                       <td class="p-3 hidden md:table-cell">
                         <div class="text-sm text-gray-600">
@@ -114,6 +118,7 @@ include COMPONENTS_PATH . '/header.php';
                 <div class="flex flex-wrap gap-2 items-center mb-2">
                   <span class="text-green-700 font-bold">Rp<?= number_format($p['harga'], 0, ',', '.') ?></span>
                   <span class="text-xs bg-gray-100 px-2 py-1 rounded">Stok: <?= (int)$p['stok'] ?></span>
+                  <span class="text-xs bg-gray-100 px-2 py-1 rounded">Terjual: <?= (int)$p['terjual'] ?></span>
                   <?php if ($izin): ?>
                     <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Izin Edar: Ya</span>
                   <?php else: ?>
@@ -134,4 +139,4 @@ include COMPONENTS_PATH . '/header.php';
 </div>
 
 <?php
-include COMPONENTS_PATH . '/footer.php';
+include COMPONENTS_PATH . '/admin/footer.php';

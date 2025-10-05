@@ -74,7 +74,22 @@ function redirect($path)
   exit;
 }
 
+function redirect_back($fallback = 'home')
+{
+  $referer = $_SERVER['HTTP_REFERER'] ?? null;
+  if ($referer) {
+    header("Location: " . $referer);
+  } else {
+    header("Location: " . url($fallback));
+  }
+  exit;
+}
+
 function isAdmin()
 {
   return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin';
+}
+function isUser()
+{
+  return isset($_SESSION['user']);
 }

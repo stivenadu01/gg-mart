@@ -5,7 +5,7 @@ $act = $_GET['act'] ?? 'tambah';
 $kode = $_GET['k'] ?? null;
 
 $pageTitle = ($act === 'edit') ? "Edit Produk" : "Tambah Produk";
-include COMPONENTS_PATH . '/header.php';
+include COMPONENTS_PATH . '/admin/header.php';
 
 // Ambil data produk jika edit
 $produk = null;
@@ -13,7 +13,7 @@ if ($act === 'edit' && $kode) {
   $produk = getProdukByKode($kode);
   if (!$produk) {
     echo "<p class='text-red-500 p-4'>Produk tidak ditemukan.</p>";
-    include COMPONENTS_PATH . '/footer.php';
+    include COMPONENTS_PATH . 'admin/footer.php';
     exit;
   }
 }
@@ -110,4 +110,4 @@ $gambarUrl = !empty($produk['gambar']) ? url("uploads/{$produk['gambar']}") : ur
   });
 </script>
 
-<?php include COMPONENTS_PATH . '/footer.php'; ?>
+<?php include COMPONENTS_PATH . '/admin/footer.php'; ?>

@@ -1,12 +1,13 @@
 <?php
 $pageTitle = "Home";
-include COMPONENTS_PATH . '/header.php';
+include COMPONENTS_PATH . '/user/header.php';
+
 ?>
 
-<h1 class="text-2xl font-bold">Main Content</h1>
-
-
-<p class="mt-4">Ini area konten utama kamu...</p>
+<main class="p-4 pb-20 bg-gray-50">
+  main
+</main>
 
 <?php
-include COMPONENTS_PATH . '/footer.php';
+include COMPONENTS_PATH . '/user/footer.php';
+?>

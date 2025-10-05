@@ -62,3 +62,14 @@ CREATE TABLE `detail_transaksi` (
     ON UPDATE CASCADE
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE keranjang (
+    id_keranjang INT AUTO_INCREMENT PRIMARY KEY,
+    id_user INT NOT NULL,
+    kode_produk CHAR(11) NOT NULL,
+    jumlah INT NOT NULL DEFAULT 1,
+    tanggal_ditambahkan DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (id_user) REFERENCES user(id_user) ON DELETE CASCADE,
+    FOREIGN KEY (kode_produk) REFERENCES produk(kode_produk) ON DELETE CASCADE
+);

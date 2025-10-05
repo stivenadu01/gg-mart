@@ -30,7 +30,7 @@ $gambar_lama   = $_POST['gambar_lama'] ?? '';
 // --- Validasi dasar ---
 $errors = [];
 
-if (strlen($nama_produk) > 50) {
+if (strlen($nama_produk) > 100) {
   $errors[] = "Nama produk maksimal 50 karakter.";
 }
 
