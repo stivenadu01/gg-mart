@@ -1,6 +1,6 @@
 <?php
 
-function getAllUsers()
+function getUsers()
 {
   $conn = get_db_connection();
   $result = $conn->query("SELECT * FROM user");
@@ -12,7 +12,7 @@ function getAllUsers()
   return $user;
 }
 
-function createUser($name, $email, $hashedPassword)
+function tambahUser($name, $email, $hashedPassword)
 {
   $conn = get_db_connection();
   $stmt = $conn->prepare("INSERT INTO user (nama, email,  password) VALUES (?, ?, ?, ?)");
@@ -23,7 +23,7 @@ function createUser($name, $email, $hashedPassword)
   return $success;
 }
 
-function getUserByEmail($email)
+function findUserByEmail($email)
 {
   $conn = get_db_connection();
   $stmt = $conn->prepare("SELECT * FROM user WHERE email = ?");

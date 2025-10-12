@@ -36,7 +36,6 @@ function models($model)
   require_once ROOT_PATH . '/models/' . $model . '.php';
 }
 
-
 function redirect($path)
 {
   header("Location: " . url($path));
@@ -54,7 +53,23 @@ function redirect_back($fallback = '')
   exit;
 }
 
-function isAdmin()
+function is_admin()
 {
   return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin';
+}
+
+function respond_json($data, $status = 200)
+{
+  http_response_code($status);
+  header('Content-Type: application/json');
+  echo json_encode($data);
+  exit;
+}
+
+function input_JSON()
+{
+  $json = file_get_contents('php://input');
+  $data = json_decode($json, true);
+  if ($data === null) respond_json(['status' => 'error', 'message' => 'Invalid JSON'], 400);
+  return $data;
 }

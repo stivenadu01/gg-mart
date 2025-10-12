@@ -1,39 +1,32 @@
 <?php
+
 models('produk');
-// 1. Definisikan Response Header
+// Definisikan Response Header
 header('Content-Type: application/json');
 
-// 2. Ambil Metode HTTP
+// Ambil Metode HTTP
 $method = $_SERVER['REQUEST_METHOD'];
 
-// 3. Ambil Input Data (untuk POST/PUT)
+// Ambil Input Data (untuk POST/PUT)
 $input_data = [];
 if (in_array($method, ['POST', 'PUT'])) {
   // Ambil data dari body permintaan JSON
-  $input_json = file_get_contents('php://input');
-  $input_data = json_decode($input_json, true);
-  if ($input_data === null) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Input JSON tidak valid']);
-    exit;
-  }
+  $input_data = input_JSON();
 }
 
-// 4. Ambil ID Produk dari URL (untuk operasi Read One, PUT, DELETE)
+// Ambil ID Produk dari URL (untuk operasi Read One, PUT, DELETE)
 $kode_produk = isset($_GET['k']) ? $_GET['k'] : null;
 
-// 5. Logika Penanganan Berdasarkan Metode HTTP
+// Logika Penanganan Berdasarkan Metode HTTP
 switch ($method) {
   case 'GET':
     if ($kode_produk) {
       // GET /api/produk?k=123 
-      $produk = getProdukByKode($kode_produk);
+      $produk = findProduk($kode_produk);
       if ($produk) {
-        http_response_code(200);
-        echo json_encode(['status' => 'success', 'data' => $produk]);
+        respond_json(['success' => true, 'data' => $produk], 200);
       } else {
-        http_response_code(404);
-        echo json_encode(['error' => 'Produk tidak ditemukan']);
+        respond_json(['success' => false, 'message' => 'Produk tidak ditemukan'], 404);
       }
     } else {
       // GET /api/produk 
@@ -42,9 +35,8 @@ switch ($method) {
       $search = isset($_GET['search']) ? trim($_GET['search']) : '';
       try {
         [$daftar_produk, $total] = getProduk($page, $limit, $search);
-        http_response_code(200);
-        echo json_encode([
-          'status' => 'success',
+        $res = [
+          'success' => true,
           'data' => $daftar_produk,
           "pagination" => [
             "total" => intval($total),
@@ -52,10 +44,10 @@ switch ($method) {
             "limit" => $limit,
             "total_pages" => ceil($total / $limit)
           ]
-        ]);
+        ];
+        respond_json($res, 200);
       } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["success" => false, "message" => $e->getMessage()]);
+        respond_json(["success" => false, "message" => $e->getMessage()], 500);
       }
     }
     break;
@@ -64,8 +56,7 @@ switch ($method) {
     // POST /api/produk
     // Periksa data yang diperlukan
     if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
-      http_response_code(422); // Unprocessable Entity
-      echo json_encode(['error' => 'Nama dan Harga wajib diisi.']);
+      respond_json(['success' => false, 'message' => 'Nama dan Harga wajib diisi.'], 422); // Unprocessable Entity
       break;
     }
 
@@ -91,23 +82,20 @@ switch ($method) {
 
     tambahProduk($input_data);
 
-    http_response_code(201); // Created
-    echo json_encode(['status' => 'success', 'message' => 'Produk berhasil ditambahkan', 'kode_produk' => $new_kode_produk]);
+    respond_json(['success' => true, 'message' => 'Produk berhasil ditambahkan', 'data' => $new_kode_produk], 201); //created
     break;
 
   case 'PUT':
     // PUT /api/produk?k=123
 
     if (!$kode_produk) {
-      http_response_code(400);
-      echo json_encode(['error' => 'ID Produk wajib diisi untuk operasi update.']);
+      respond_json(['success' => false, 'message' => 'ID Produk wajib diisi untuk operasi update.'], 404);
       break;
     }
 
     // Periksa data yang diperlukan
     if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
-      http_response_code(422);
-      echo json_encode(['error' => 'Nama dan Harga wajib diisi.']);
+      respond_json(['success' => false, 'message' => 'Nama dan Harga wajib diisi.'], 422);
       break;
     }
 
@@ -120,26 +108,25 @@ switch ($method) {
       if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
       $targetFile = $targetDir . $filename;
 
-      // Hapus gambar lama jika ada
+
+      // Ambil produk lama untuk cek gambar lama dan Hapus gambar lama jika ada
+      $produk_lama = findProduk($kode_produk);
       if (!empty($produk_lama['gambar']) && file_exists(ROOT_PATH . '/public/' . $produk_lama['gambar'])) {
         unlink(ROOT_PATH . '/public/' . $produk_lama['gambar']);
       }
 
       // Simpan file baru
       if (move_uploaded_file($_FILES['gambar']['tmp_name'], $targetFile)) {
-        $gambarPath = 'uploads/' . $filename;
-        $input_data['gambar'] = $gambarPath;
+        $input_data['gambar'] = $filename;
       }
     }
 
 
     $is_edit = editProduk($kode_produk, $input_data);
     if ($is_edit) {
-      http_response_code(200);
-      echo json_encode(['status' => 'success', 'message' => 'Produk berhasil diupdate']);
+      respond_json(['success' => true, 'message' => 'Produk berhasil diupdate'], 200);
     } else {
-      http_response_code(404);
-      echo json_encode(['error' => 'Produk gagal diupdate atau tidak ditemukan']);
+      respond_json(['success' => 'Produk gagal diupdate atau tidak ditemukan'], 404);
     }
     break;
 
@@ -147,24 +134,21 @@ switch ($method) {
     // DELETE /api/produk?k=123
 
     if (!$kode_produk) {
-      http_response_code(400);
-      echo json_encode(['error' => 'ID Produk wajib diisi untuk operasi delete.']);
+      respond_json(['success' => false, 'message' => 'ID Produk wajib diisi untuk operasi delete.'], 400);
       break;
     }
     $is_hapus = hapusProduk($kode_produk);
 
     if ($is_hapus) {
-      http_response_code(200);
-      echo json_encode(['status' => 'success', 'message' => 'Produk berhasil dihapus']);
+      respond_json(['success' => true, 'message' => 'Produk berhasil dihapus'], 200);
     } else {
-      http_response_code(404);
-      echo json_encode(['error' => 'Produk gagal dihapus atau tidak ditemukan']);
+      respond_json(['success' => false, 'message' => 'Produk gagal dihapus atau tidak ditemukan'], 404);
     }
     break;
 
   default:
     http_response_code(405); // Method Not Allowed
     header('Allow: GET, POST, PUT, DELETE');
-    echo json_encode(['error' => 'Metode ' . $method . ' tidak didukung.']);
+    echo json_encode(['success' => false, 'message' => 'Metode ' . $method . ' tidak didukung.']);
     break;
 }

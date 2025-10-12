@@ -3,7 +3,7 @@
 
 
 
-function getProdukByKode($kode)
+function findProduk($kode)
 {
   $conn = get_db_connection();
   $sql = "SELECT * FROM produk WHERE kode_produk = '$kode'";
@@ -101,17 +101,4 @@ function hapusProduk($kode)
   $result = $conn->query($sql);
   $conn->close();
   return $result;
-}
-
-function all($limit = 10, $offset = 0, $search = '', $searchCols = [])
-{
-  $where = '';
-  if ($search && count($searchCols) > 0) {
-    $escaped = $this->conn->real_escape_string("%$search%");
-    $clauses = array_map(fn($col) => "$col LIKE '$escaped'", $searchCols);
-    $where = "WHERE " . implode(" OR ", $clauses);
-  }
-  $sql = "SELECT * FROM {$this->table} $where LIMIT $limit OFFSET $offset";
-  $res = $this->conn->query($sql);
-  return $res->fetch_all(MYSQLI_ASSOC);
 }
