@@ -11,6 +11,6 @@ function get_db_connection()
     $conn = new mysqli($host, $user, $pass, $name);
     return $conn;
   } catch (Throwable $th) {
-    die("Database connection failed: " . $th->getMessage());
+    die("Database connection failed");
   }
 }

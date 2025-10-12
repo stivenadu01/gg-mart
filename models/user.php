@@ -12,11 +12,11 @@ function getAllUsers()
   return $user;
 }
 
-function createUser($name, $email, $no_hp, $hashedPassword)
+function createUser($name, $email, $hashedPassword)
 {
   $conn = get_db_connection();
-  $stmt = $conn->prepare("INSERT INTO user (nama, email, no_hp, password) VALUES (?, ?, ?, ?)");
-  $stmt->bind_param("ssss", $name, $email, $no_hp, $hashedPassword);
+  $stmt = $conn->prepare("INSERT INTO user (nama, email,  password) VALUES (?, ?, ?, ?)");
+  $stmt->bind_param("ssss", $name, $email, $hashedPassword);
   $success = $stmt->execute();
   $stmt->close();
   $conn->close();
@@ -34,17 +34,4 @@ function getUserByEmail($email)
   $stmt->close();
   $conn->close();
   return $user;
-}
-
-function emailExists($email)
-{
-  $conn = get_db_connection();
-  $stmt = $conn->prepare("SELECT id_user FROM user WHERE email = ?");
-  $stmt->bind_param("s", $email);
-  $stmt->execute();
-  $stmt->store_result();
-  $exists = $stmt->num_rows > 0;
-  $stmt->close();
-  $conn->close();
-  return $exists;
 }

@@ -1,12 +1,12 @@
-<div class="hidden md:block sticky top-0 z-50">
-  <!-- Header Tokopedia-style -->
+<div class="hidden md:block sticky top-0 z-40">
+  <!-- Header -->
   <header class="w-full bg-white shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
       <!-- Kiri: Logo -->
       <div class="flex items-center space-x-6">
         <!-- Logo -->
-        <a href="<?= BASE_URL ?>" class="text-green-600 font-bold text-2xl">
-          <img src="<?= ASSETS_PATH . "/logo.png" ?>" alt="GG-MART" class="h-10">
+        <a href="<?= url() ?>" class="text-green-600 font-bold text-2xl">
+          <img src="<?= assets_url('logo.png') ?>" alt="GG-MART" class="h-10">
         </a>
       </div>
 
@@ -57,7 +57,7 @@
 
         <!-- Admin Dashboard -->
         <?php if (isAdmin()): ?>
-          <a href="<?= url('admin/dashboard') ?>" class="hidden md:flex items-center space-x-1 hover:text-green-600">
+          <a href="<?= url('admin/dashboard') ?>" class="items-center space-x-1 hover:text-green-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M4 7v13h16V7M4 7l8-4 8 4" />
             </svg>
@@ -67,14 +67,16 @@
 
         <!-- Profil -->
         <button class="flex items-center space-x-1 hover:text-green-600">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-700" viewBox="0 0 24 24" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z" />
           </svg>
-          <span class="hidden md:inline font-medium">
-            <?= isUser() ? $_SESSION['user']['nama'] : "Akun" ?>
+          <span class="font-medium">
+            AKUN
           </span>
         </button>
       </div>
     </div>
   </header>
 </div>
+
+<main>

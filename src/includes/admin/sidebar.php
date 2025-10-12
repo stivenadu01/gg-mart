@@ -5,7 +5,7 @@
   <!-- Header Sidebar -->
   <div class="flex items-center justify-between px-4 py-2 border-b">
     <span x-show="!sidebarCollapse" class="font-bold text-xl">
-      <img src="<?= ASSETS_PATH ?>/logo.png" alt="" class="h-10">
+      <img src="<?= assets_url('logo.png') ?>" alt="" class="h-10">
     </span>
     <div class="relative group">
       <button x-show="!sidebarCollapse" @click="sidebarCollapse = !sidebarCollapse" class="p-2 rounded hover:bg-gray-100">
@@ -32,7 +32,7 @@
 
   <!-- Menu -->
   <nav class="flex-1 p-2 space-y-2">
-    <a href="<?= url('admin/dashboard') ?>" class="flex items-center p-2 rounded hover:bg-gray-200">
+    <a href="<?= url('admin/dashboard') ?>" class="flex items-center p-2 rounded hover:bg-gray-200 <?= $page == 'admin/dashboard' ? 'bg-gray-300' : 'bg-transparent' ?>">
       <!-- Heroicons - Cube -->
       <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
         viewBox="0 0 24 24" stroke="currentColor">
@@ -42,13 +42,12 @@
 
       <span x-show="!sidebarCollapse" class="ml-3">Dashboard</span>
     </a>
-    <a href="<?= url('admin/produk') ?>" class="flex items-center p-2 rounded hover:bg-gray-200">
+    <a href="<?= url('admin/produk') ?>" class="flex items-center p-2 rounded hover:bg-gray-200 <?= $page == 'admin/produk' ? 'bg-gray-300' : 'bg-transparent' ?>">
       <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none"
         viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M21 16.5v-9a.75.75 0 00-.375-.649l-8.25-4.5a.75.75 0 00-.75 0l-8.25 4.5A.75.75 0 003 7.5v9a.75.75 0 00.375.649l8.25 4.5a.75.75 0 00.75 0l8.25-4.5A.75.75 0 0021 16.5z" />
       </svg>
-
       <span x-show="!sidebarCollapse" class="ml-3">Kelola Produk</span>
     </a>
   </nav>
@@ -59,7 +58,12 @@
 <div
   x-show="sidebarOpen"
   class="fixed inset-0 flex z-50 lg:hidden"
-  x-transition>
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 -translate-x-full"
+    x-transition:enter-end="opacity-100 translate-x-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-x-0"
+    x-transition:leave-end="opacity-0 -translate-x-full">
 
   <!-- Overlay -->
   <div @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50"></div>
@@ -67,16 +71,16 @@
   <!-- Drawer -->
   <aside class="relative w-64 bg-white shadow-md flex flex-col z-50">
     <div class="flex items-center justify-between p-4 border-b">
-      <span><img src="<?= ASSETS_PATH ?>/logo.png" alt="" class="h-10"></span>
+      <span><img src="<?= assets_url('logo.png') ?>" alt="" class="h-10"></span>
       <button @click="sidebarOpen = false" class="p-2 rounded hover:bg-gray-100">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
         </svg>
       </button>
     </div>
     <nav class="flex-1 p-2 space-y-2">
-      <a href="<?= url('admin/dashboard') ?>" class="block p-2 rounded hover:bg-gray-200">Dashboard</a>
-      <a href="<?= url('admin/produk') ?>" class="block p-2 rounded hover:bg-gray-200">Kelola Produk</a>
+      <a href="<?= url('admin/dashboard') ?>" class="block p-2 rounded hover:bg-gray-200 <?= $page == 'admin/dashboard' ? 'bg-gray-300' : 'bg-transparent' ?>">Dashboard</a>
+      <a href="<?= url('admin/produk') ?>" class="block p-2 rounded <?= $page == 'admin/produk' ? 'bg-gray-300' : 'bg-transparent' ?> hover:bg-gray-200">Kelola Produk</a>
     </nav>
   </aside>
 </div>

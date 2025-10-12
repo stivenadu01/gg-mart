@@ -1,113 +1,117 @@
 <?php
 
-function getAllProduk()
-{
-  $conn = get_db_connection();
-  $sql = "SELECT * FROM produk";
-  $result = $conn->query($sql);
-  $produk = [];
-  if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-      $produk[] = $row;
-    }
-  }
-  $conn->close();
-  return $produk;
-}
+
+
 
 function getProdukByKode($kode)
 {
   $conn = get_db_connection();
-  $stmt = $conn->prepare("SELECT * FROM produk WHERE kode_produk = ?");
-  $stmt->bind_param("s", $kode);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $produk = $result->fetch_assoc();
-  $stmt->close();
+  $sql = "SELECT * FROM produk WHERE kode_produk = '$kode'";
+  $result = $conn->query($sql);
+  $result = $result->fetch_assoc();
   $conn->close();
-  return $produk;
+  return $result;
+}
+
+function getProduk($page = 1, $limit = 10, $search = '')
+{
+  $conn = get_db_connection();
+  $offset = ($page - 1) * $limit;
+
+  $where = "";
+  if ($search !== '') {
+    $safe = "%" . $conn->real_escape_string($search) . "%";
+    $where = "WHERE p.nama_produk LIKE '$safe' OR k.nama_kategori LIKE '$safe'";
+  }
+  // hitung total
+  $resCount = $conn->query("SELECT COUNT(*) AS total FROM produk p LEFT JOIN kategori k ON p.id_kategori = k.id_kategori $where");
+  $total = $resCount->fetch_assoc()['total'];
+
+  // ambil data
+  $res = $conn->query("
+    SELECT p.kode_produk, p.nama_produk, p.deskripsi, p.harga, p.stok, p.terjual, 
+           p.gambar, k.nama_kategori
+    FROM produk p 
+    LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
+    $where
+    ORDER BY p.tanggal_dibuat DESC
+    LIMIT $limit OFFSET $offset
+  ");
+
+  $produk = [];
+  while ($row = $res->fetch_assoc()) {
+    $produk[] = $row;
+  }
+  $conn->close();
+  return [$produk, $total];
 }
 
 function tambahProduk($data)
 {
   $conn = get_db_connection();
-  $stmt = $conn->prepare("INSERT INTO produk (kode_produk, nama_produk, harga, stok, gambar, deskripsi, izin_edar) VALUES (?, ?, ?, ?, ?, ?, ?)");
-  $stmt->bind_param("ssdisss", $data['kode_produk'], $data['nama_produk'], $data['harga'], $data['stok'], $data['gambar'], $data['deskripsi'], $data['izin_edar']);
-  $stmt->execute();
+  $sql = "INSERT INTO produk (kode_produk, nama_produk, harga, stok, id_kategori, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param(
+    "ssiisss",
+    $data['kode_produk'],
+    $data['nama_produk'],
+    $data['harga'],
+    $data['stok'],
+    $data['id_kategori'],
+    $data['deskripsi'],
+    $data['gambar']
+  );
+  $result = $stmt->execute();
   $stmt->close();
   $conn->close();
+  return $result;
 }
 
-function updateProduk($kode, $data)
+function editProduk($kode, $data)
 {
   $conn = get_db_connection();
-  $stmt = $conn->prepare("UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, gambar = ?, deskripsi = ?, izin_edar = ? WHERE kode_produk = ?");
-  $stmt->bind_param("sdissss", $data['nama_produk'], $data['harga'], $data['stok'], $data['gambar'], $data['deskripsi'], $data['izin_edar'], $kode);
-  $stmt->execute();
+
+  $sql = "UPDATE produk SET nama_produk=?, harga=?, stok=?, id_kategori=?, deskripsi=?";
+  $params = [$data['nama_produk'], $data['harga'], $data['stok'], $data['id_kategori'], $data['deskripsi']];
+  $types = "siiss";
+
+  if (!empty($data['gambar'])) {
+    $sql .= ", gambar=?";
+    $types .= "s";
+    $params[] = $data['gambar'];
+  }
+
+  $sql .= " WHERE kode_produk=?";
+  $types .= "s";
+  $params[] = $kode;
+
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param($types, ...$params);
+  $result = $stmt->execute();
   $stmt->close();
   $conn->close();
+  return $result;
 }
 
 function hapusProduk($kode)
 {
   $conn = get_db_connection();
-  // Hapus gambar dari server
-  $produk = getProdukByKode($kode);
-  if ($produk && $produk['gambar']) {
-    $uploadDir = ROOT_PATH . '/public/uploads/';
-    if (file_exists($uploadDir . $produk['gambar'])) {
-      unlink($uploadDir . $produk['gambar']);
-    }
-  }
-  // Hapus data produk dari database
-  $stmt = $conn->prepare("DELETE FROM produk WHERE kode_produk = ?");
-  $stmt->bind_param("s", $kode);
-  $stmt->execute();
-  $stmt->close();
+
+  $sql = "DELETE FROM produk WHERE kode_produk = '$kode'";
+  $result = $conn->query($sql);
   $conn->close();
+  return $result;
 }
 
-
-function getFilteredProduk($q = '', $urutkan = 'sesuai')
+function all($limit = 10, $offset = 0, $search = '', $searchCols = [])
 {
-  $conn = get_db_connection();
-
-  // Query dasar
-  $sql = "SELECT * FROM produk WHERE 1";
-
-  // 🔍 Filter pencarian (nama/deskripsi)
-  if (!empty($q)) {
-    $q_safe = mysqli_real_escape_string($conn, $q);
-    $sql .= " AND (nama_produk LIKE '%$q_safe%' OR deskripsi LIKE '%$q_safe%')";
+  $where = '';
+  if ($search && count($searchCols) > 0) {
+    $escaped = $this->conn->real_escape_string("%$search%");
+    $clauses = array_map(fn($col) => "$col LIKE '$escaped'", $searchCols);
+    $where = "WHERE " . implode(" OR ", $clauses);
   }
-
-  // 🔽 Urutkan berdasarkan pilihan
-  switch ($urutkan) {
-    case 'termahal':
-      $sql .= " ORDER BY harga DESC";
-      break;
-    case 'termurah':
-      $sql .= " ORDER BY harga ASC";
-      break;
-    case 'terlaris':
-      $sql .= " ORDER BY terjual DESC";
-      break;
-    case 'terbaru':
-      $sql .= " ORDER BY created_at DESC";
-      break;
-    default:
-      $sql .= " ORDER BY kode_produk DESC";
-      break;
-  }
-
-  // Jalankan query
-  $result = $conn->query($sql);
-  $produk = [];
-  if ($result) {
-    while ($row = $result->fetch_assoc()) {
-      $produk[] = $row;
-    }
-  }
-
-  return $produk;
+  $sql = "SELECT * FROM {$this->table} $where LIMIT $limit OFFSET $offset";
+  $res = $this->conn->query($sql);
+  return $res->fetch_all(MYSQLI_ASSOC);
 }

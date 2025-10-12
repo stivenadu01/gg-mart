@@ -2,7 +2,7 @@
 
 if (isset($_SESSION['user'])) {
   unset($_SESSION['user']);
-  setcookie('user', '', time() - 3600, '/'); // Hapus cookie
+  setcookie('user', '', time() - 86400, '/'); // Hapus cookie
   set_flash('Anda telah logout.', 'success');
 }
 
