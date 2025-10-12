@@ -14,7 +14,7 @@
 <body>
   <?php
   // desktop
-  include INCLUDES_PATH . 'user/header_desktop.php';
+  include INCLUDES_PATH . 'user/layout/header_desktop.php';
   // mobile
-  include INCLUDES_PATH . 'user/header_mobile.php';
+  include INCLUDES_PATH . 'user/layout/header_mobile.php';
   ?>

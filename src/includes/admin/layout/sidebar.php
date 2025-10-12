@@ -1,32 +1,23 @@
 <aside
   :class="sidebarCollapse ? 'w-16' : 'w-64'"
-  class="w-16 hidden lg:flex flex-col bg-white border-r shadow-md transition-all duration-300 fixed inset-y-0 left-0 z-30">
+  class="w-16 hidden lg:flex flex-col bg-white border-r shadow-md transition-all duration-300 fixed inset-y-0 left-0 z-10">
 
   <!-- Header Sidebar -->
   <div class="flex items-center justify-between px-4 py-2 border-b">
-    <span x-show="!sidebarCollapse" class="font-bold text-xl">
-      <img src="<?= assets_url('logo.png') ?>" alt="" class="h-10">
+    <span x-show="!sidebarCollapse" class="font-bold text-xl text-gg-primary">
+      Menu
     </span>
-    <div class="relative group">
-      <button x-show="!sidebarCollapse" @click="sidebarCollapse = !sidebarCollapse" class="p-2 rounded hover:bg-gray-100">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
-        </svg>
-      </button>
-      <span class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-gray-800 text-white text-xs opacity-0 transition-opacity pointer-events-none whitespace-nowrap z-10 group-hover:opacity-100">
-        Tutup Sidebar
-      </span>
-    </div>
-    <div class="relative group" x-show="sidebarCollapse">
-      <button @click="sidebarCollapse = !sidebarCollapse" class="p-2 rounded hover:bg-gray-100">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-        </svg>
-      </button>
-      <span class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-gray-800 text-white text-xs opacity-0 transition-opacity pointer-events-none whitespace-nowrap z-10 group-hover:opacity-100">
-        Buka Sidebar
-      </span>
-    </div>
+    <button x-show="!sidebarCollapse" @click="sidebarCollapse = !sidebarCollapse" class="p-2 rounded hover:bg-gray-100" title="Tutup Sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+      </svg>
+    </button>
+    <button @click="sidebarCollapse = !sidebarCollapse" class="p-2 rounded hover:bg-gray-100" x-show="sidebarCollapse" title="Buka Sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
+  </div>
 
   </div>
 
@@ -57,7 +48,7 @@
 <!-- SIDEBAR MOBILE OVERLAY -->
 <div
   x-show="sidebarOpen"
-  class="fixed inset-0 flex z-50 lg:hidden"
+  class="fixed inset-0 flex z-30 lg:hidden"
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0 -translate-x-full"
     x-transition:enter-end="opacity-100 translate-x-0"
@@ -71,7 +62,8 @@
   <!-- Drawer -->
   <aside class="relative w-64 bg-white shadow-md flex flex-col z-50">
     <div class="flex items-center justify-between p-4 border-b">
-      <span><img src="<?= assets_url('logo.png') ?>" alt="" class="h-10"></span>
+      <span><img src="<?= assets_url('logo.png') ?>" alt="" class="h-10 inline-block"></span>
+      <span class="text-gg-primary font-bold">Menu</span>
       <button @click="sidebarOpen = false" class="p-2 rounded hover:bg-gray-100">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />

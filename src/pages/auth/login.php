@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $email = $_POST['email'] ?? '';
   $password = $_POST['password'] ?? '';
 
-  $user = getUserByEmail($email);
+  $user = findUserByEmail($email);
   if ($user && password_verify($password, $user['password'])) {
     // Login berhasil
     $_SESSION['user'] = $user;
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Login';
-include INCLUDES_PATH . 'user/header.php';
+include INCLUDES_PATH . 'user/layout/header.php';
 ?>
 
 <div class="min-h-[70vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -75,4 +75,4 @@ include INCLUDES_PATH . 'user/header.php';
 
 <?php
 
-include INCLUDES_PATH . 'user/footer.php';
+include INCLUDES_PATH . 'user/layout/footer.php';

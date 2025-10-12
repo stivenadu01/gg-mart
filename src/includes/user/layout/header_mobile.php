@@ -75,7 +75,7 @@
       <li><a href="<?= url('produk') ?>" class="block hover:text-green-600">🛍️ Produk</a></li>
       <li><a href="<?= url('transaksi') ?>" class="block hover:text-green-600">📦 Transaksi</a></li>
       <li><a href="<?= url('akun') ?>" class="block hover:text-green-600">👤 Akun</a></li>
-      <?php if (isAdmin()): ?>
+      <?php if (is_admin()): ?>
         <li><a href="<?= url('admin/dashboard') ?>" class="block hover:text-green-600">⚙️ Admin Dashboard</a></li>
       <?php endif; ?>
     </ul>

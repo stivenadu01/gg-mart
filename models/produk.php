@@ -13,7 +13,27 @@ function findProduk($kode)
   return $result;
 }
 
-function getProduk($page = 1, $limit = 10, $search = '')
+function getAllProduk()
+{
+  $conn = get_db_connection();
+  $sql = "
+    SELECT p.kode_produk, p.nama_produk, k.nama_kategori, p.harga, p.stok, p.terjual,
+    p.gambar, p.deskripsi FROM produk p
+    LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
+    ORDER BY p.nama_produk ASC
+  ";
+  $res = $conn->query($sql);
+
+  $produk = [];
+  while ($row = $res->fetch_assoc()) {
+    $produk[] = $row;
+  }
+
+  $conn->close();
+  return $produk;
+}
+
+function getProdukList($page = 1, $limit = 10, $search = '')
 {
   $conn = get_db_connection();
   $offset = ($page - 1) * $limit;

@@ -8,8 +8,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
       </svg>
     </button>
-    <span :class="sidebarCollapse ? 'block' : 'hidden'"><img src="<?= assets_url('logo.png') ?>" alt="MyApp Logo" class="h-10"></span>
-    <span><img src="<?= assets_url('logo.png') ?>" alt="MyApp Logo" class="h-10 lg:hidden"></span>
+    <span><img src="<?= assets_url('logo.png') ?>" alt="MyApp Logo" class="h-10"></span>
   </div>
 
   <div class="flex items-center space-x-4">

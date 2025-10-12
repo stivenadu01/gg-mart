@@ -56,7 +56,7 @@
         <div class="w-px h-6 bg-gray-300"></div>
 
         <!-- Admin Dashboard -->
-        <?php if (isAdmin()): ?>
+        <?php if (is_admin()): ?>
           <a href="<?= url('admin/dashboard') ?>" class="items-center space-x-1 hover:text-green-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M4 7v13h16V7M4 7l8-4 8 4" />

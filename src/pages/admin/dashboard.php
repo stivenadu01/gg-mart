@@ -1,11 +1,11 @@
 <?php
 
 $pageTitle = "Dashboard";
-include INCLUDES_PATH . "admin/header.php";
+include INCLUDES_PATH . "admin/layout/header.php";
 ?>
 
 
 
 <?php
 
-include INCLUDES_PATH . "admin/footer.php";
+include INCLUDES_PATH . "admin/layout/footer.php";

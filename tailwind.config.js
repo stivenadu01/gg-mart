@@ -4,11 +4,14 @@
 module.exports = {
   content: [
     "./src/pages/**/*.{php,html}",
-    "./src/includes/**/*.{php,html}"
+    "./src/pages/**/**/*.{php,html}",
+    "./src/includes/**/*.{php,html}",
+    "./src/includes/**/**/*.{php,html}",
   ],
   safelist: [
     "lg:ml-16",
     "lg:ml-64",
+    "lg:block",
 
     // Semua kombinasi warna gg- untuk bg, text, border, ring, hover, dan gradient
     {

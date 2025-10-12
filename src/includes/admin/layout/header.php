@@ -13,13 +13,13 @@
 </head>
 
 <body class="h-screen flex flex-col bg-gray-100"
-  x-data="{ sidebarOpen: false, sidebarCollapse: false }">
+  x-data="{ sidebarOpen: false, sidebarCollapse: true }">
 
   <?php
 
-  include INCLUDES_PATH . '/admin/navbar.php';
+  include INCLUDES_PATH . '/admin/layout/navbar.php';
 
-  include INCLUDES_PATH . '/admin/sidebar.php';
+  include INCLUDES_PATH . '/admin/layout/sidebar.php';
   ?>
-  <main class="flex-1 overflow-y-auto p-6"
+  <main class="flex-1 overflow-y-auto"
     :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'">
