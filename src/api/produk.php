@@ -1,58 +1,44 @@
 <?php
 
-models('produk');
-header('Content-Type: application/json');
+models('Produk');
 
-// Tentukan method awal
-$method = $_SERVER['REQUEST_METHOD'];
+require_once ROOT_PATH . '/config/api_init.php';
 
-// Override method jika dikirim via POST (_method=PUT/DELETE)
-if (isset($_POST['_method'])) {
-  $method = strtoupper($_POST['_method']);
-}
 
 // Ambil kode produk (jika ada)
 $kode_produk = isset($_GET['k']) ? $_GET['k'] : null;
 
-// Ambil input data (dukung JSON & FormData)
-$input_data = [];
-if (in_array($method, ['POST', 'PUT'])) {
-  $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-
-  if (stripos($contentType, 'application/json') !== false) {
-    $input_data = input_JSON();
-  } else {
-    $input_data = $_POST;
-  }
-}
-unset($input_data['_method']); // jangan ikut disimpan
-
+$res = [];
+$status = 200;
 switch ($method) {
   case 'GET':
+    // GET /api/produk?mode=all
     if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
       $produk = getAllProduk();
-      respond_json(['success' => true, 'data' => $produk]);
+      $res = ['success' => true, 'data' => $produk];
       break;
     }
 
+    // GET /api/produk?k=PRD_3247371
     if ($kode_produk) {
       $produk = findProduk($kode_produk);
       if ($produk) {
-        respond_json(['success' => true, 'data' => $produk]);
+        $res = ['success' => true, 'data' => $produk];
       } else {
-        respond_json(['success' => false, 'message' => 'Produk tidak ditemukan'], 404);
+        $res = ['success' => false, 'message' => 'Produk tidak ditemukan'];
+        $status = 404;
       }
       break;
     }
 
-    // daftar produk + pagination
+    // GET /api/produk
     $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
     $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
     $search = trim($_GET['search'] ?? '');
 
     try {
       [$daftar_produk, $total] = getProdukList($page, $limit, $search);
-      respond_json([
+      $res = [
         'success' => true,
         'data' => $daftar_produk,
         'pagination' => [
@@ -61,16 +47,19 @@ switch ($method) {
           'limit' => $limit,
           'total_pages' => ceil($total / $limit)
         ]
-      ]);
+      ];
     } catch (Exception $e) {
-      respond_json(["success" => false, "message" => $e->getMessage()], 500);
+      $res = ["success" => false, "message" => $e->getMessage()];
+      $status = 500;
     }
     break;
 
   case 'POST':
-    // tambah produk
+    api_require_admin();
+    // POST /api/produk
     if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
-      respond_json(['success' => false, 'message' => 'Nama dan Harga wajib diisi.'], 422);
+      $res = ['success' => false, 'message' => 'Nama dan Harga wajib diisi.'];
+      $status =  422;
       break;
     }
 
@@ -91,18 +80,22 @@ switch ($method) {
     }
 
     tambahProduk($input_data);
-    respond_json(['success' => true, 'message' => 'Produk berhasil ditambahkan', 'data' => $new_kode_produk], 201);
+    $res = ['success' => true, 'message' => 'Produk berhasil ditambahkan', 'data' => $new_kode_produk];
+    $status = 201;
     break;
 
   case 'PUT':
-    // update produk
+    api_require_admin();
+    // PUT api/produk?k=PRD_0238848
     if (!$kode_produk) {
-      respond_json(['success' => false, 'message' => 'Kode produk wajib diisi untuk update.'], 400);
+      $res = ['success' => false, 'message' => 'Kode produk wajib diisi untuk update.'];
+      $status = 400;
       break;
     }
 
     if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
-      respond_json(['success' => false, 'message' => 'Nama dan Harga wajib diisi.'], 422);
+      $res = ['success' => false, 'message' => 'Nama dan Harga wajib diisi.'];
+      $status = 422;
       break;
     }
 
@@ -127,35 +120,48 @@ switch ($method) {
       }
     }
 
+
     $is_edit = editProduk($kode_produk, $input_data);
     if ($is_edit) {
-      respond_json(['success' => true, 'message' => 'Produk berhasil diupdate']);
+      $res = ['success' => true, 'message' => 'Produk berhasil diupdate'];
     } else {
-      respond_json(['success' => false, 'message' => 'Produk gagal diupdate atau tidak ditemukan'], 404);
+      $res = ['success' => false, 'message' => 'Produk gagal diupdate atau tidak ditemukan'];
+      $status = 404;
     }
     break;
 
   case 'DELETE':
+    api_require_admin();
+    // DELETE /api/produk?k=PRD_28384783
     if (!$kode_produk) {
-      respond_json(['success' => false, 'message' => 'Kode produk wajib diisi untuk delete.'], 400);
+      $res = ['success' => false, 'message' => 'Kode produk wajib diisi untuk delete.'];
+      $status = 400;
       break;
     }
 
-    $produk_lama = findProduk($kode_produk);
-    if ($produk_lama && !empty($produk_lama['gambar'])) {
-      $path = ROOT_PATH . '/public/uploads/' . $produk_lama['gambar'];
-      if (file_exists($path)) unlink($path);
-    }
+    try {
+      $produk_lama = findProduk($kode_produk);
+      if ($produk_lama && !empty($produk_lama['gambar'])) {
+        $path = ROOT_PATH . '/public/uploads/' . $produk_lama['gambar'];
+        if (file_exists($path)) unlink($path);
+      }
 
-    $is_hapus = hapusProduk($kode_produk);
-    respond_json([
-      'success' => $is_hapus,
-      'message' => $is_hapus ? 'Produk berhasil dihapus' : 'Produk gagal dihapus atau tidak ditemukan'
-    ]);
+
+      $is_hapus = hapusProduk($kode_produk);
+      $res = [
+        'success' => $is_hapus,
+        'message' => $is_hapus ? 'Produk berhasil dihapus' : 'Produk gagal dihapus atau tidak ditemukan'
+      ];
+      $status = $is_hapus ? 200 : 404;
+    } catch (Exception $e) {
+      $res = ['success' => false, 'message' => 'Teerjadi kesalahan saat menghapus produk'];
+      $status = 500;
+    }
     break;
 
   default:
-    http_response_code(405);
-    header('Allow: GET, POST, PUT, DELETE');
-    respond_json(['success' => false, 'message' => 'Metode tidak didukung: ' . $method]);
+    $res = ['success' => false, 'message' => 'Metode tidak didukung'];
+    $status = 404;
 }
+
+respond_json($res, $status);

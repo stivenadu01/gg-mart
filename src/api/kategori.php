@@ -1,115 +1,126 @@
 <?php
 
-models('kategori');
-header('Content-Type: application/json');
-
-$method = $_SERVER['REQUEST_METHOD'];
-
-// Ambil Input Data (untuk POST/PUT)
-$input_data = [];
-if (in_array($method, ['POST', 'PUT'])) {
-  $input_data = input_JSON();
-}
+models('Kategori');
+require_once ROOT_PATH . '/config/api_init.php';
 
 // Ambil ID kategori (untuk Read One, PUT, DELETE)
 $id_kategori = isset($_GET['id']) ? intval($_GET['id']) : null;
 
 // Logika Penanganan Berdasarkan Metode HTTP
+$res = [];
+$status = 200;
 switch ($method) {
   case 'GET':
+    // GET /api/kategori?mode=all
     if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
-      // GET /api/kategori?mode=all
       $kategori = getAllKategori();
-      respond_json(['success' => true, 'data' => $kategori], 200);
+      $res = ['success' => true, 'data' => $kategori];
       break;
-    } else if ($id_kategori) {
-      // GET /api/kategori?id=1
+    }
+    // GET /api/kategori?id=1
+    if ($id_kategori) {
       $kategori = findKategori($id_kategori);
       if ($kategori) {
-        respond_json(['success' => true, 'data' => $kategori], 200);
+        $res = ['success' => true, 'data' => $kategori];
       } else {
-        respond_json(['success' => false, 'message' => 'Kategori tidak ditemukan'], 404);
+        $res = ['success' => false, 'message' => 'Kategori tidak ditemukan'];
+        $status = 404;
       }
-    } else {
-      // GET /api/kategori
-      $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
-      $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
-      $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-      try {
-        [$daftar_kategori, $total] = getKategoriList($page, $limit, $search);
-        $res = [
-          'success' => true,
-          'data' => $daftar_kategori,
-          "pagination" => [
-            "total" => intval($total),
-            "page" => $page,
-            "limit" => $limit,
-            "total_pages" => ceil($total / $limit)
-          ]
-        ];
-        respond_json($res, 200);
-      } catch (Exception $e) {
-        respond_json(["success" => false, "message" => $e->getMessage()], 500);
-      }
+      break;
+    }
+
+    // GET /api/kategori
+    $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
+    $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    try {
+      [$kategori, $total] = getKategoriList($page, $limit, $search);
+      $res = [
+        'success' => true,
+        'data' => $kategori,
+        "pagination" => [
+          "total" => intval($total),
+          "page" => $page,
+          "limit" => $limit,
+          "total_pages" => ceil($total / $limit)
+        ]
+      ];
+    } catch (Exception $e) {
+      $res = ["success" => false, "message" => $e->getMessage()];
+      $status = 500;
     }
     break;
 
   case 'POST':
+    api_require_admin();
     // POST /api/kategori
     if (empty($input_data['nama_kategori'])) {
-      respond_json(['success' => false, 'message' => 'Nama kategori wajib diisi.'], 422);
+      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
+      $status = 422;
       break;
     }
 
     $is_tambah = tambahKategori($input_data);
 
     if ($is_tambah) {
-      respond_json(['success' => true, 'message' => 'Kategori berhasil ditambahkan'], 201);
+      $res = ['success' => true, 'message' => 'Kategori berhasil ditambahkan'];
+      $status = 201;
     } else {
-      respond_json(['success' => false, 'message' => 'Gagal menambahkan kategori'], 500);
+      $res = ['success' => false, 'message' => 'Gagal menambahkan kategori'];
+      $status = 500;
     }
     break;
 
   case 'PUT':
+    api_require_admin();
     // PUT /api/kategori?id=1
     if (!$id_kategori) {
-      respond_json(['success' => false, 'message' => 'ID kategori wajib diisi untuk update.'], 400);
+      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk update.'];
+      $status = 400;
       break;
     }
 
     if (empty($input_data['nama_kategori'])) {
-      respond_json(['success' => false, 'message' => 'Nama kategori wajib diisi.'], 422);
+      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
+      $status = 422;
       break;
     }
 
     $is_edit = editKategori($id_kategori, $input_data);
 
     if ($is_edit) {
-      respond_json(['success' => true, 'message' => 'Kategori berhasil diupdate'], 200);
+      $res = ['success' => true, 'message' => 'Kategori berhasil diupdate'];
     } else {
-      respond_json(['success' => false, 'message' => 'Kategori gagal diupdate atau tidak ditemukan'], 404);
+      $res = ['success' => false, 'message' => 'Kategori gagal diupdate atau tidak ditemukan'];
+      $status = 404;
     }
     break;
 
   case 'DELETE':
+    api_require_admin();
     // DELETE /api/kategori?id=1
     if (!$id_kategori) {
-      respond_json(['success' => false, 'message' => 'ID kategori wajib diisi untuk delete.'], 400);
+      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk delete.'];
+      $status = 400;
       break;
     }
 
-    $is_hapus = hapusKategori($id_kategori);
-
-    if ($is_hapus) {
-      respond_json(['success' => true, 'message' => 'Kategori berhasil dihapus'], 200);
-    } else {
-      respond_json(['success' => false, 'message' => 'Kategori gagal dihapus atau tidak ditemukan'], 404);
+    try {
+      $is_hapus = hapusKategori($id_kategori);
+      if ($is_hapus) {
+        $res = ['success' => true, 'message' => 'Kategori berhasil dihapus'];
+      } else {
+        throw new Exception();
+      }
+    } catch (Exception $e) {
+      $res = ['success' => false, 'message' => 'Terjadi kesalahan saat menghapus kategori'];
+      $status = 404;
     }
     break;
 
   default:
-    http_response_code(405);
-    header('Allow: GET, POST, PUT, DELETE');
-    echo json_encode(['success' => false, 'message' => 'Metode ' . $method . ' tidak didukung.']);
-    break;
+    $res = ['success' => false, 'message' => 'Metode ' . $method . ' tidak didukung.'];
+    $status = 405;
 }
+// respon
+respond_json($res, $status);

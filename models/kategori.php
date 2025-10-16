@@ -2,18 +2,14 @@
 
 function findKategori($id)
 {
-  $conn = get_db_connection();
-  $stmt = $conn->prepare("SELECT * FROM kategori WHERE id_kategori = ?");
-  $stmt->bind_param('i', $id);
-  $stmt->execute();
-  $result = $stmt->get_result()->fetch_assoc();
-  $stmt->close();
-  $conn->close();
+  global $conn;
+  $res = $conn->query("SELECT * FROM kategori WHERE id_kategori = $id");
+  $result = $res->fetch_assoc();
   return $result;
 }
 function getAllKategori()
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "SELECT * FROM kategori ORDER BY nama_kategori ASC";
   $res = $conn->query($sql);
 
@@ -22,13 +18,12 @@ function getAllKategori()
     $kategori[] = $row;
   }
 
-  $conn->close();
   return $kategori;
 }
 
 function getKategoriList($page = 1, $limit = 10, $search = '')
 {
-  $conn = get_db_connection();
+  global $conn;
   $offset = ($page - 1) * $limit;
 
   $where = "";
@@ -55,41 +50,37 @@ function getKategoriList($page = 1, $limit = 10, $search = '')
     $kategori[] = $row;
   }
 
-  $conn->close();
   return [$kategori, $total];
 }
 
 function tambahKategori($data)
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "INSERT INTO kategori (nama_kategori, deskripsi) VALUES (?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("ss", $data['nama_kategori'], $data['deskripsi']);
   $result = $stmt->execute();
   $stmt->close();
-  $conn->close();
   return $result;
 }
 
 function editKategori($id, $data)
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "UPDATE kategori SET nama_kategori = ?, deskripsi = ? WHERE id_kategori = ?";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("ssi", $data['nama_kategori'], $data['deskripsi'], $id);
   $result = $stmt->execute();
   $stmt->close();
-  $conn->close();
   return $result;
 }
 
 function hapusKategori($id)
 {
-  $conn = get_db_connection();
+  global $conn;
   $stmt = $conn->prepare("DELETE FROM kategori WHERE id_kategori = ?");
   $stmt->bind_param('i', $id);
   $result = $stmt->execute();
   $stmt->close();
-  $conn->close();
   return $result;
 }

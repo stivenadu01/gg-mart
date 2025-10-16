@@ -1,3 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  a, button {
+    @apply transition-transform duration-200 hover:scale-105 inline-flex items-center justify-center px-4 py-2 rounded-md;
+  }
+  input, textarea, select {
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-gg-secondary focus:outline-none transition-transform duration-200 hover:scale-[1.01] focus:scale-[1.01];
+  }
+  label{
+    @apply block text-sm font-medium text-neutral-700 mb-1
+  }
+  table.table{
+    @apply text-neutral-700 text-sm border min-w-full
+  }
+  table.table > thead > tr{
+    @apply bg-gg-secondary text-neutral-700
+  }
+  table.table th{
+    @apply p-2 border font-semibold
+  }
+  table.table td{
+    @apply p-2 border
+  }
+  table.table > tbody tr{
+    @apply hover:bg-gg-secondary/20 transition-colors duration-150 ease-in-out cursor-pointer
+  }
+  table.table tbody{
+    @apply divide-y divide-gray-100 bg-white
+  }
+  .custom-scrollbar {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background-color: #f3f4f6;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #9ca3af;
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;
+  }
+}

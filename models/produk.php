@@ -5,17 +5,16 @@
 
 function findProduk($kode)
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "SELECT * FROM produk WHERE kode_produk = '$kode'";
   $result = $conn->query($sql);
   $result = $result->fetch_assoc();
-  $conn->close();
   return $result;
 }
 
 function getAllProduk()
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "
     SELECT p.kode_produk, p.nama_produk, k.nama_kategori, p.harga, p.stok, p.terjual,
     p.gambar, p.deskripsi FROM produk p
@@ -29,13 +28,12 @@ function getAllProduk()
     $produk[] = $row;
   }
 
-  $conn->close();
   return $produk;
 }
 
 function getProdukList($page = 1, $limit = 10, $search = '')
 {
-  $conn = get_db_connection();
+  global $conn;
   $offset = ($page - 1) * $limit;
 
   $where = "";
@@ -54,7 +52,7 @@ function getProdukList($page = 1, $limit = 10, $search = '')
     FROM produk p 
     LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
     $where
-    ORDER BY p.tanggal_dibuat DESC
+    ORDER BY terjual DESC
     LIMIT $limit OFFSET $offset
   ");
 
@@ -62,13 +60,12 @@ function getProdukList($page = 1, $limit = 10, $search = '')
   while ($row = $res->fetch_assoc()) {
     $produk[] = $row;
   }
-  $conn->close();
   return [$produk, $total];
 }
 
 function tambahProduk($data)
 {
-  $conn = get_db_connection();
+  global $conn;
   $sql = "INSERT INTO produk (kode_produk, nama_produk, harga, stok, id_kategori, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
@@ -83,17 +80,22 @@ function tambahProduk($data)
   );
   $result = $stmt->execute();
   $stmt->close();
-  $conn->close();
   return $result;
 }
 
 function editProduk($kode, $data)
 {
-  $conn = get_db_connection();
+  global $conn;
 
   $sql = "UPDATE produk SET nama_produk=?, harga=?, stok=?, id_kategori=?, deskripsi=?";
   $params = [$data['nama_produk'], $data['harga'], $data['stok'], $data['id_kategori'], $data['deskripsi']];
   $types = "siiss";
+
+  if (!empty($data['terjual'])) {
+    $sql .= ", terjual=?";
+    $types .= "i";
+    $params[] = $data['terjual'];
+  }
 
   if (!empty($data['gambar'])) {
     $sql .= ", gambar=?";
@@ -109,16 +111,34 @@ function editProduk($kode, $data)
   $stmt->bind_param($types, ...$params);
   $result = $stmt->execute();
   $stmt->close();
-  $conn->close();
   return $result;
 }
 
 function hapusProduk($kode)
 {
-  $conn = get_db_connection();
+  global $conn;
 
   $sql = "DELETE FROM produk WHERE kode_produk = '$kode'";
   $result = $conn->query($sql);
-  $conn->close();
   return $result;
+}
+
+// tambahan
+function getProdukHampirHabis($batas = 10)
+{
+  global $conn;
+  $b = intval($batas);
+  $sql = "
+    SELECT kode_produk, nama_produk, stok
+    FROM produk
+    WHERE stok < $b
+    ORDER BY stok ASC, nama_produk ASC
+    LIMIT 50
+  ";
+  $res = $conn->query($sql);
+  $out = [];
+  if ($res) {
+    while ($row = $res->fetch_assoc()) $out[] = $row;
+  }
+  return $out;
 }

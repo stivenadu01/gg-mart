@@ -1,45 +1,15 @@
 <?php
 
-function uploads_url($file)
-{
-  return BASE_URL . '/uploads/' . $file;
-}
-
-function assets_url($file)
-{
-  return BASE_URL . '/assets/' . $file;
-}
-
-function set_flash($message, $type = '')
-{
-  $_SESSION['flash'][] = [$message, $type];
-}
-
-function get_flash()
-{
-  if (isset($_SESSION['flash'])) {
-    $flashes = $_SESSION['flash'];
-    unset($_SESSION['flash']);
-    return $flashes;
-  }
-  return [];
-}
-
 function url($path = '')
 {
   $base_url = rtrim(BASE_URL, '/');
   $path = ltrim($path, '/');
   return $base_url . '/' . $path;
 }
+
 function models($model)
 {
   require_once ROOT_PATH . '/models/' . $model . '.php';
-}
-
-function redirect($path)
-{
-  header("Location: " . url($path));
-  exit;
 }
 
 function redirect_back($fallback = '')
@@ -57,6 +27,22 @@ function is_admin()
 {
   return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin';
 }
+
+function api_require_admin()
+{
+  if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+    respond_json(['success' => false, 'message' => 'Akses ditolak'], 403);
+    exit;
+  }
+}
+function page_require_admin()
+{
+  if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+    redirect_back();
+  }
+}
+
+
 
 function respond_json($data, $status = 200)
 {
