@@ -7,7 +7,7 @@ function transaksiPage() {
     metodeBayar: 'TUNAI',
 
     async fetchProduk() {
-      let res = await fetch(`${baseUrl}/api/produk?search=${this.search}`);
+      let res = await fetch(`${baseUrl}/api/produk?search=${this.search}&limit=15`);
       res = await res.json();
       if (res.success) this.produk = res.data;
     },
@@ -92,7 +92,8 @@ function transaksiPage() {
           jumlah: i.jumlah,
           harga_satuan: i.harga_satuan,
           subtotal: i.subtotal
-        }))
+        })),
+        status: 'selesai'
       };
 
       let res = await fetch(`${baseUrl}/api/transaksi`, {

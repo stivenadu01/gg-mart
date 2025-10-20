@@ -7,7 +7,7 @@ USE gg_mart;
 -- =====================================================
 -- TABLE: user
 -- =====================================================
-CREATE TABLE user (
+CREATE TABLE IF NOT EXISTS user (
     id_user INT AUTO_INCREMENT PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -19,7 +19,7 @@ CREATE TABLE user (
 -- =====================================================
 -- TABLE: kategori
 -- =====================================================
-CREATE TABLE kategori (
+CREATE TABLE IF NOT EXISTS kategori (
     id_kategori INT AUTO_INCREMENT PRIMARY KEY,
     nama_kategori VARCHAR(100) NOT NULL,
     deskripsi TEXT
@@ -28,7 +28,7 @@ CREATE TABLE kategori (
 -- =====================================================
 -- TABLE: produk
 -- =====================================================
-CREATE TABLE produk (
+CREATE TABLE IF NOT EXISTS produk (
     kode_produk CHAR(12) PRIMARY KEY,
     id_kategori INT,
     nama_produk VARCHAR(150) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE produk (
 -- =====================================================
 -- TABLE: transaksi
 -- =====================================================
-CREATE TABLE transaksi (
+CREATE TABLE IF NOT EXISTS transaksi (
     id_transaksi INT AUTO_INCREMENT PRIMARY KEY,
     id_user INT,
     tanggal_transaksi DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -66,7 +66,7 @@ CREATE TABLE transaksi (
 -- =====================================================
 -- TABLE: detail_transaksi
 -- =====================================================
-CREATE TABLE detail_transaksi (
+CREATE TABLE IF NOT EXISTS detail_transaksi (
     id_detail INT AUTO_INCREMENT PRIMARY KEY,
     id_transaksi INT NOT NULL,
     kode_produk CHAR(12),
@@ -85,4 +85,14 @@ CREATE TABLE detail_transaksi (
         REFERENCES produk(kode_produk)
         ON DELETE SET NULL
         ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS stok (
+  id_stok INT AUTO_INCREMENT PRIMARY KEY,
+  kode_produk CHAR(12) NOT NULL,
+  tipe ENUM('masuk','keluar') NOT NULL,
+  jumlah INT NOT NULL,
+  tanggal DATETIME DEFAULT CURRENT_TIMESTAMP,
+  keterangan TEXT,
+  FOREIGN KEY (kode_produk) REFERENCES produk(kode_produk)
 );

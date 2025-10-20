@@ -26,27 +26,13 @@ include INCLUDES_PATH . "admin/layout/header.php";
 
       <!-- KATEGORI -->
       <div>
-        <label>Kategori</label>
-        <div class="relative">
-          <input type="text"
-            x-model="kategoriKeyword"
-            @focus="kategoriOpen = true"
-            @blur="setTimeout(() => kategoriOpen = false, 200)"
-            @input="filterKategori"
-            placeholder="Ketik untuk mencari kategori..."
-            autocomplete="off">
-
-          <div x-show="kategoriOpen && kategoriFiltered.length > 0"
-            class="absolute z-20 mt-1 w-full bg-white border-gg-primary/50 border-2 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            <template x-for="k in kategoriFiltered" :key="k.id_kategori">
-              <div
-                @click="selectKategori(k)"
-                class="px-3 py-2 hover:bg-gg-primary/50 cursor-pointer"
-                x-text="k.nama_kategori">
-              </div>
-            </template>
-          </div>
-        </div>
+        <label class="font-medium text-gray-700">Pilih Kategori</label>
+        <select x-model="form.id_kategori" required class="w-full">
+          <option value="">-- Pilih Kategori --</option>
+          <template x-for="k in kategori" :key="k.id_kategori">
+            <option :value="k.id_kategori" x-text="k.nama_kategori"></option>
+          </template>
+        </select>
       </div>
 
 
@@ -57,40 +43,6 @@ include INCLUDES_PATH . "admin/layout/header.php";
         <input type="number" x-model="form.harga"
           placeholder="Contoh: 25000" required>
       </div>
-
-      <!-- STOK -->
-      <div>
-        <template x-if="!isEdit">
-          <div>
-            <label>Stok Awal</label>
-            <input type="number" x-model="form.stok" placeholder="0">
-          </div>
-        </template>
-
-        <template x-if="isEdit">
-          <div class="space-y-3">
-            <div>
-              <label>Stok Saat Ini</label>
-              <input type="number" x-model="form.stok" readonly
-                class="cursor-not-allowed bg-gray-200">
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-3">
-              <div class="flex-1">
-                <label>Tambah Stok</label>
-                <input type="number" x-model.number="stokTambah"
-
-                  placeholder="0">
-              </div>
-              <div class="flex-1">
-                <label>Kurangi Stok</label>
-                <input type="number" x-model.number="stokKurang" placeholder="0">
-              </div>
-            </div>
-          </div>
-        </template>
-      </div>
-
 
       <!-- DESKRIPSI -->
       <div>

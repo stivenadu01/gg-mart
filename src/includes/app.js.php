@@ -4,6 +4,7 @@
   const uploadsUrl = <?= json_encode(UPLOADS_URL) ?>;
 
   const currentUser = <?= json_encode($_SESSION['user'] ?? null) ?>;
+  const isAdmin = <?= json_encode(is_admin()) ?>;
 
   function formatRupiah(angka) {
     angka = new Intl.NumberFormat('id-ID').format(angka);
@@ -33,5 +34,35 @@
     };
     const date = new Date(dateStr);
     return date.toLocaleDateString('id-ID', options);
+  }
+
+  function storageHelper(key, action, value = null) {
+    const data = JSON.parse(localStorage.getItem(key) || '[]')
+
+    switch (action) {
+      case 'load':
+        return data
+
+      case 'save':
+        if (!value) return
+        // tambahkan item baru ke depan, hapus duplikat, batasi 100 item
+        const updated = [value, ...data.filter(i => i !== value)].slice(0, 100)
+        localStorage.setItem(key, JSON.stringify(updated))
+        return updated
+
+      case 'remove':
+        if (typeof value !== 'number') return
+        data.splice(value, 1)
+        localStorage.setItem(key, JSON.stringify(data))
+        return data
+
+      case 'clear':
+        localStorage.removeItem(key)
+        return []
+
+      default:
+        console.warn('storageHelper: action tidak dikenal ->', action)
+        return data
+    }
   }
 </script>

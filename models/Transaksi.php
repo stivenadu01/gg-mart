@@ -1,6 +1,6 @@
 <?php
 
-function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null)
+function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null,  $order_by = 'tanggal_transaksi', $order_dir = 'DESC')
 {
   global $conn;
   $offset = ($page - 1) * $limit;
@@ -46,7 +46,7 @@ function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null,
       FROM transaksi t
       LEFT JOIN user u ON t.id_user = u.id_user
       $where
-      ORDER BY t.tanggal_transaksi DESC
+      ORDER BY t.$order_by $order_dir
       LIMIT $limit OFFSET $offset
     ");
 

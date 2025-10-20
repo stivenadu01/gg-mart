@@ -1,0 +1,1807 @@
+--- model ---
+<?php
+
+function getUsers()
+{
+  global $conn;
+  $result = $conn->query("SELECT * FROM user");
+  $user = [];
+  while ($row = $result->fetch_assoc()) {
+    $user[] = $row;
+  }
+  return $user;
+}
+
+function tambahUser($name, $email, $hashedPassword)
+{
+  global $conn;
+  $stmt = $conn->prepare("INSERT INTO user (nama, email,  password) VALUES (?, ?, ?, ?)");
+  $stmt->bind_param("ssss", $name, $email, $hashedPassword);
+  $success = $stmt->execute();
+  $stmt->close();
+  return $success;
+}
+
+function findUserByEmail($email)
+{
+  global $conn;
+  $stmt = $conn->prepare("SELECT * FROM user WHERE email = ?");
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $user = $result->fetch_assoc();
+  $stmt->close();
+  return $user;
+}
+<?php
+
+function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null)
+{
+  global $conn;
+  $offset = ($page - 1) * $limit;
+
+  $conditions = [];
+
+  // filter search
+  if ($search) {
+    $safe = "%" . $conn->real_escape_string($search) . "%";
+    $conditions[] = "kode_transaksi LIKE '$safe'";
+  }
+
+  // filter tanggal
+  if ($start && $end) {
+    $safeStart = $conn->real_escape_string($start);
+    $safeEnd = $conn->real_escape_string($end);
+    $conditions[] = "DATE(tanggal_transaksi) BETWEEN '$safeStart' AND '$safeEnd'";
+  }
+  // filter metode bayar
+  if ($metode) {
+    $safeMetode = $conn->real_escape_string($metode);
+    $conditions[] = "metode_bayar = '$safeMetode'";
+  }
+  // search id transaksi
+  if ($search) {
+    $safeSearch = "%" . $conn->real_escape_string($search) . "%";
+    $where = "WHERE p.nama_produk LIKE '$safeSearch' OR k.nama_kategori LIKE '$safeSearch'";
+  }
+
+
+  $where = '';
+  if (count($conditions) > 0) {
+    $where = "WHERE " . implode(" AND ", $conditions);
+  }
+
+  // hitung total
+  $resCount = $conn->query("SELECT COUNT(*) AS total FROM transaksi $where");
+  $total = $resCount->fetch_assoc()['total'];
+
+  // ambil data
+  $res = $conn->query("
+      SELECT t.*, u.nama AS kasir
+      FROM transaksi t
+      LEFT JOIN user u ON t.id_user = u.id_user
+      $where
+      ORDER BY t.tanggal_transaksi DESC
+      LIMIT $limit OFFSET $offset
+    ");
+
+  $data = [];
+  while ($row = $res->fetch_assoc()) {
+    $data[] = $row;
+  }
+
+  return [$data, $total];
+}
+
+
+function findTransaksi($id_transaksi)
+{
+  global $conn;
+  $sql = "SELECT * FROM transaksi WHERE id_transaksi=$id_transaksi";
+  $result = $conn->query($sql);
+  $result = $result->fetch_assoc();
+  return $result;
+}
+
+function tambahTransaksi($data)
+{
+  global $conn;
+  $sql = "INSERT INTO transaksi (id_user, total_harga, status, kode_transaksi, metode_bayar) VALUES (?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param(
+    "iisss",
+    $data['id_user'],
+    $data['total_harga'],
+    $data['status'],
+    $data['kode_transaksi'],
+    $data['metode_bayar']
+  );
+  $stmt->execute();
+  $insert_id = $stmt->insert_id;
+  $stmt->close();
+  return $insert_id; // kembalikan id transaksi baru
+}
+
+function updateTransaksi($id_transaksi, $data)
+{
+  global $conn;
+  $sql = "UPDATE transaksi SET total_harga=?, status=?, metode_bayar=? WHERE id_transaksi=?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param(
+    "issi",
+    $data['total_harga'],
+    $data['status'],
+    $data['metode_bayar'],
+    $id_transaksi
+  );
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
+function hapusTransaksi($id_transaksi)
+{
+  global $conn;
+  $stmt = $conn->prepare("DELETE FROM transaksi WHERE id_transaksi=?");
+  $stmt->bind_param("i", $id_transaksi);
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
+
+
+// tambahan
+function getPendapatanByDate($date)
+{
+  global $conn;
+  $safe = $conn->real_escape_string($date);
+  $sql = "
+    SELECT COALESCE(SUM(total_harga), 0) AS pendapatan
+    FROM transaksi
+    WHERE DATE(tanggal_transaksi) = '{$safe}'
+  ";
+  $res = $conn->query($sql);
+  return floatval($res ? $res->fetch_assoc()['pendapatan'] : 0);
+}
+
+function getProdukTerjualByDate($date)
+{
+  global $conn;
+  $safe = $conn->real_escape_string($date);
+  $sql = "
+    SELECT COALESCE(SUM(dt.jumlah), 0) AS total_item
+    FROM detail_transaksi dt
+    JOIN transaksi t ON dt.id_transaksi = t.id_transaksi
+    WHERE DATE(t.tanggal_transaksi) = '{$safe}'
+  ";
+  $res = $conn->query($sql);
+  return intval($res ? $res->fetch_assoc()['total_item'] : 0);
+}
+<?php
+
+
+
+
+function findProduk($kode)
+{
+  global $conn;
+  $sql = "SELECT * FROM produk WHERE kode_produk = '$kode'";
+  $result = $conn->query($sql);
+  $result = $result->fetch_assoc();
+  return $result;
+}
+
+function getAllProduk()
+{
+  global $conn;
+  $sql = "
+    SELECT p.kode_produk, p.nama_produk, k.nama_kategori, p.harga, p.stok, p.terjual,
+    p.gambar, p.deskripsi FROM produk p
+    LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
+    ORDER BY p.nama_produk ASC
+  ";
+  $res = $conn->query($sql);
+
+  $produk = [];
+  while ($row = $res->fetch_assoc()) {
+    $produk[] = $row;
+  }
+
+  return $produk;
+}
+
+function getProdukList($page = 1, $limit = 10, $search = '')
+{
+  global $conn;
+  $offset = ($page - 1) * $limit;
+
+  $where = "";
+  if ($search !== '') {
+    $safe = "%" . $conn->real_escape_string($search) . "%";
+    $where = "WHERE p.nama_produk LIKE '$safe' OR k.nama_kategori LIKE '$safe'";
+  }
+  // hitung total
+  $resCount = $conn->query("SELECT COUNT(*) AS total FROM produk p LEFT JOIN kategori k ON p.id_kategori = k.id_kategori $where");
+  $total = $resCount->fetch_assoc()['total'];
+
+  // ambil data
+  $res = $conn->query("
+    SELECT p.kode_produk, p.nama_produk, p.deskripsi, p.harga, p.stok, p.terjual, 
+           p.gambar, k.nama_kategori
+    FROM produk p 
+    LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
+    $where
+    ORDER BY terjual DESC
+    LIMIT $limit OFFSET $offset
+  ");
+
+  $produk = [];
+  while ($row = $res->fetch_assoc()) {
+    $produk[] = $row;
+  }
+  return [$produk, $total];
+}
+
+function tambahProduk($data)
+{
+  global $conn;
+  $sql = "INSERT INTO produk (kode_produk, nama_produk, harga, stok, id_kategori, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param(
+    "ssiisss",
+    $data['kode_produk'],
+    $data['nama_produk'],
+    $data['harga'],
+    $data['stok'],
+    $data['id_kategori'],
+    $data['deskripsi'],
+    $data['gambar']
+  );
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+
+function editProduk($kode, $data)
+{
+  global $conn;
+
+  $sql = "UPDATE produk SET nama_produk=?, harga=?, stok=?, id_kategori=?, deskripsi=?";
+  $params = [$data['nama_produk'], $data['harga'], $data['stok'], $data['id_kategori'], $data['deskripsi']];
+  $types = "siiss";
+
+  if (!empty($data['terjual'])) {
+    $sql .= ", terjual=?";
+    $types .= "i";
+    $params[] = $data['terjual'];
+  }
+
+  if (!empty($data['gambar'])) {
+    $sql .= ", gambar=?";
+    $types .= "s";
+    $params[] = $data['gambar'];
+  }
+
+  $sql .= " WHERE kode_produk=?";
+  $types .= "s";
+  $params[] = $kode;
+
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param($types, ...$params);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+
+function hapusProduk($kode)
+{
+  global $conn;
+
+  $sql = "DELETE FROM produk WHERE kode_produk = '$kode'";
+  $result = $conn->query($sql);
+  return $result;
+}
+
+// tambahan
+function getProdukHampirHabis($batas = 10)
+{
+  global $conn;
+  $b = intval($batas);
+  $sql = "
+    SELECT kode_produk, nama_produk, stok
+    FROM produk
+    WHERE stok < $b
+    ORDER BY stok ASC, nama_produk ASC
+    LIMIT 50
+  ";
+  $res = $conn->query($sql);
+  $out = [];
+  if ($res) {
+    while ($row = $res->fetch_assoc()) $out[] = $row;
+  }
+  return $out;
+}
+<?php
+
+function findKategori($id)
+{
+  global $conn;
+  $res = $conn->query("SELECT * FROM kategori WHERE id_kategori = $id");
+  $result = $res->fetch_assoc();
+  return $result;
+}
+function getAllKategori()
+{
+  global $conn;
+  $sql = "SELECT * FROM kategori ORDER BY nama_kategori ASC";
+  $res = $conn->query($sql);
+
+  $kategori = [];
+  while ($row = $res->fetch_assoc()) {
+    $kategori[] = $row;
+  }
+
+  return $kategori;
+}
+
+function getKategoriList($page = 1, $limit = 10, $search = '')
+{
+  global $conn;
+  $offset = ($page - 1) * $limit;
+
+  $where = "";
+  if ($search !== '') {
+    $safe = "%" . $conn->real_escape_string($search) . "%";
+    $where = "WHERE nama_kategori LIKE '$safe' OR deskripsi LIKE '$safe'";
+  }
+
+  // Hitung total
+  $resCount = $conn->query("SELECT COUNT(*) AS total FROM kategori $where");
+  $total = $resCount->fetch_assoc()['total'];
+
+  // Ambil data
+  $res = $conn->query("
+    SELECT id_kategori, nama_kategori, deskripsi
+    FROM kategori
+    $where
+    ORDER BY id_kategori DESC
+    LIMIT $limit OFFSET $offset
+  ");
+
+  $kategori = [];
+  while ($row = $res->fetch_assoc()) {
+    $kategori[] = $row;
+  }
+
+  return [$kategori, $total];
+}
+
+function tambahKategori($data)
+{
+  global $conn;
+  $sql = "INSERT INTO kategori (nama_kategori, deskripsi) VALUES (?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("ss", $data['nama_kategori'], $data['deskripsi']);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+
+function editKategori($id, $data)
+{
+  global $conn;
+  $sql = "UPDATE kategori SET nama_kategori = ?, deskripsi = ? WHERE id_kategori = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("ssi", $data['nama_kategori'], $data['deskripsi'], $id);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+
+function hapusKategori($id)
+{
+  global $conn;
+  $stmt = $conn->prepare("DELETE FROM kategori WHERE id_kategori = ?");
+  $stmt->bind_param('i', $id);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+<?php
+
+function getDetailTransaksi($id_transaksi)
+{
+  global $conn;
+  $stmt = $conn->prepare("
+    SELECT d.*, p.nama_produk 
+    FROM detail_transaksi d
+    JOIN produk p ON d.kode_produk = p.kode_produk
+    WHERE d.id_transaksi = ?
+  ");
+  $stmt->bind_param("i", $id_transaksi);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $data = [];
+  while ($row = $res->fetch_assoc()) {
+    $data[] = $row;
+  }
+  $stmt->close();
+  return $data;
+}
+
+function tambahDetailTransaksi($data)
+{
+  global $conn;
+
+  $sql = "INSERT INTO detail_transaksi (id_transaksi, kode_produk, jumlah, harga_satuan, subtotal) VALUES (?, ?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param(
+    "isiii",
+    $data['id_transaksi'],
+    $data['kode_produk'],
+    $data['jumlah'],
+    $data['harga_satuan'],
+    $data['subtotal']
+  );
+  $res = $stmt->execute();
+  return $res;
+}
+
+function hapusDetailTransaksi($id_transaksi)
+{
+  global $conn;
+  $stmt = $conn->prepare("DELETE FROM detail_transaksi WHERE id_transaksi=?");
+  $stmt->bind_param("i", $id_transaksi);
+  $res = $stmt->execute();
+  $stmt->close();
+  return $res;
+}
+
+
+
+--- api ---
+<?php
+models('Transaksi');
+models('DetailTransaksi');
+models('Produk'); // untuk cek stok
+
+
+require_once ROOT_PATH . '/config/api_init.php';
+
+// ambil id_transaksi
+$id_transaksi = $_GET['id'] ?? null;
+
+$res = [];
+$status = 200;
+api_require_admin();
+switch ($method) {
+  case 'GET':
+    // GET /api/transaksi?id=1
+    if ($id_transaksi) {
+      $transaksi = findTransaksi($id_transaksi);
+      if (!$transaksi) {
+        $res = ['success' => false, 'message' => 'Transaksi tidak ditemukan'];
+        $status = 404;
+        break;
+      }
+
+      $detail = getDetailTransaksi($id_transaksi);
+      $transaksi['detail'] = $detail;
+
+      $res = ['success' => true, 'data' => $transaksi];
+      break;
+    }
+
+    // GET /api/transaksi
+    $page   = $_GET['halaman'] ?? 1;
+    $limit  = $_GET['limit'] ?? 10;
+    $search = trim($_GET['search'] ?? null);
+    $start  = $_GET['start'] ?? null;
+    $end    = $_GET['end'] ?? null;
+    $metode    = $_GET['metode'] ?? null;
+
+    [$daftar, $total] = getTransaksiList($page, $limit, $search, $start, $end, $metode);
+    $res = [
+      'success' => true,
+      'data' => $daftar,
+      'pagination' => [
+        'total' => intval($total),
+        'page' => $page,
+        'limit' => $limit,
+        'total_pages' => ceil($total / $limit)
+      ]
+    ];
+    break;
+
+  case 'POST':
+    // POST /api/transaksi
+
+    try {
+      $conn->begin_transaction();
+
+      // validasi
+      if (empty($input_data['total_harga']) || empty($input_data['detail']) || !is_array($input_data['detail'])) {
+        throw new Exception('Total harga dan detail transaksi wajib diisi', 422);
+        break;
+      }
+
+      // generate kode_transaksi
+      $timePart = substr(str_replace('.', '', microtime(true)), -8);
+      $randomPart = random_int(100, 999);
+      $kode_transaksi = 'TRX_' . $timePart . $randomPart;
+
+      $input_data['kode_transaksi'] = $kode_transaksi;
+      $input_data['status'] = $input_data['status'] ?? 'pending';
+      $input_data['metode_bayar'] = $input_data['metode_bayar'] ?? 'TUNAI';
+      $input_data['id_user'] = $input_data['id_user'] ?? $_SESSION['user']['id_user'];
+
+      // simpan transaksi utama
+      $id_transaksi_baru = tambahTransaksi($input_data);
+
+      // simpan detail transaksi
+      foreach ($input_data['detail'] as $item) {
+        $produk = findProduk($item['kode_produk']);
+        if (!$produk) {
+          throw new Exception("Produk {$item['kode_produk']} tidak ditemukan", 404);
+          break 2;
+        }
+
+        $jumlah = intval($item['jumlah']);
+        if ($produk['stok'] < $jumlah) {
+          throw new Exception("Stok produk {$produk['nama_produk']} tidak mencukupi", 422);
+          break 2;
+        }
+
+        $subtotal = $item['harga_satuan'] * $jumlah;
+        tambahDetailTransaksi([
+          'id_transaksi' => $id_transaksi_baru,
+          'kode_produk' => $item['kode_produk'],
+          'jumlah' => $jumlah,
+          'harga_satuan' => $item['harga_satuan'],
+          'subtotal' => $subtotal
+        ]);
+
+        // update stok & terjual
+        editProduk($item['kode_produk'], [
+          'nama_produk' => $produk['nama_produk'],
+          'harga' => $produk['harga'],
+          'stok' => $produk['stok'] - $jumlah,
+          'terjual' => $produk['terjual'] + $jumlah,
+          'id_kategori' => $produk['id_kategori'],
+          'deskripsi' => $produk['deskripsi'],
+          'gambar' => $produk['gambar']
+        ]);
+      }
+      $conn->commit();
+      $res = ['success' => true, 'message' => 'Transaksi berhasil dibuat', 'data' => ['id' => $id_transaksi_baru, 'kode_transaksi' => $kode_transaksi]];
+      $status = 201;
+    } catch (Exception $e) {
+      $conn->rollback();
+      $res = ['success' => false, 'message' => $e->getMessage()];
+      $status = $e->getCode() ?: 500;
+    }
+    break;
+
+  case 'PUT':
+    break;
+  case 'DELETE':
+    if (!$id_transaksi) {
+      $res = ['success' => false, 'message' => 'ID transaksi wajib diisi untuk dihapus'];
+      $status = 400;
+      break;
+    }
+
+    $hapus = hapusTransaksi($id_transaksi);
+    if ($hapus) {
+      $res = ['success' => true, 'message' => 'Transaksi berhasil dihapus'];
+    } else {
+      $res = ['success' => true, 'message' => 'Gagal hapus transaksi'];
+      $status = 400;
+    }
+    break;
+
+  default:
+    $res = ['success' => false, 'message' => "Metode tidak didukung: $method"];
+    $status = 405;
+}
+
+respond_json($res, $status);
+<?php
+
+models('Produk');
+
+require_once ROOT_PATH . '/config/api_init.php';
+
+
+// Ambil kode produk (jika ada)
+$kode_produk = isset($_GET['k']) ? $_GET['k'] : null;
+
+$res = [];
+$status = 200;
+switch ($method) {
+  case 'GET':
+    // GET /api/produk?mode=all
+    if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
+      $produk = getAllProduk();
+      $res = ['success' => true, 'data' => $produk];
+      break;
+    }
+
+    // GET /api/produk?k=PRD_3247371
+    if ($kode_produk) {
+      $produk = findProduk($kode_produk);
+      if ($produk) {
+        $res = ['success' => true, 'data' => $produk];
+      } else {
+        $res = ['success' => false, 'message' => 'Produk tidak ditemukan'];
+        $status = 404;
+      }
+      break;
+    }
+
+    // GET /api/produk
+    $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
+    $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $search = trim($_GET['search'] ?? '');
+
+    try {
+      [$daftar_produk, $total] = getProdukList($page, $limit, $search);
+      $res = [
+        'success' => true,
+        'data' => $daftar_produk,
+        'pagination' => [
+          'total' => intval($total),
+          'page' => $page,
+          'limit' => $limit,
+          'total_pages' => ceil($total / $limit)
+        ]
+      ];
+    } catch (Exception $e) {
+      $res = ["success" => false, "message" => $e->getMessage()];
+      $status = 500;
+    }
+    break;
+
+  case 'POST':
+    api_require_admin();
+    // POST /api/produk
+    if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
+      $res = ['success' => false, 'message' => 'Nama dan Harga wajib diisi.'];
+      $status =  422;
+      break;
+    }
+
+    $timePart = substr(str_replace('.', '', microtime(true)), -8);
+    $randomPart = random_int(100, 999);
+    $new_kode_produk = 'PRD_' . $timePart . $randomPart;
+    $input_data['kode_produk'] = $new_kode_produk;
+
+    // upload file
+    if (!empty($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK) {
+      $ext = pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION);
+      $filename = $new_kode_produk . '.' . $ext;
+      $targetDir = ROOT_PATH . '/public/uploads/';
+      if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+      if (move_uploaded_file($_FILES['gambar']['tmp_name'], $targetDir . $filename)) {
+        $input_data['gambar'] = $filename;
+      }
+    }
+
+    tambahProduk($input_data);
+    $res = ['success' => true, 'message' => 'Produk berhasil ditambahkan', 'data' => $new_kode_produk];
+    $status = 201;
+    break;
+
+  case 'PUT':
+    api_require_admin();
+    // PUT api/produk?k=PRD_0238848
+    if (!$kode_produk) {
+      $res = ['success' => false, 'message' => 'Kode produk wajib diisi untuk update.'];
+      $status = 400;
+      break;
+    }
+
+    if (empty($input_data['nama_produk']) || empty($input_data['harga'])) {
+      $res = ['success' => false, 'message' => 'Nama dan Harga wajib diisi.'];
+      $status = 422;
+      break;
+    }
+
+    // handle upload baru
+    if (!empty($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK) {
+      $ext = pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION);
+      $filename = $kode_produk . '.' . $ext;
+      $targetDir = ROOT_PATH . '/public/uploads/';
+      if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+      $targetFile = $targetDir . $filename;
+
+      // hapus gambar lama
+      $produk_lama = findProduk($kode_produk);
+      if (!empty($produk_lama['gambar'])) {
+        $oldPath = $targetDir . $produk_lama['gambar'];
+        if (file_exists($oldPath)) unlink($oldPath);
+      }
+
+      // simpan file baru
+      if (move_uploaded_file($_FILES['gambar']['tmp_name'], $targetFile)) {
+        $input_data['gambar'] = $filename;
+      }
+    }
+
+
+    $is_edit = editProduk($kode_produk, $input_data);
+    if ($is_edit) {
+      $res = ['success' => true, 'message' => 'Produk berhasil diupdate'];
+    } else {
+      $res = ['success' => false, 'message' => 'Produk gagal diupdate atau tidak ditemukan'];
+      $status = 404;
+    }
+    break;
+
+  case 'DELETE':
+    api_require_admin();
+    // DELETE /api/produk?k=PRD_28384783
+    if (!$kode_produk) {
+      $res = ['success' => false, 'message' => 'Kode produk wajib diisi untuk delete.'];
+      $status = 400;
+      break;
+    }
+
+    try {
+      $produk_lama = findProduk($kode_produk);
+      if ($produk_lama && !empty($produk_lama['gambar'])) {
+        $path = ROOT_PATH . '/public/uploads/' . $produk_lama['gambar'];
+        if (file_exists($path)) unlink($path);
+      }
+
+
+      $is_hapus = hapusProduk($kode_produk);
+      $res = [
+        'success' => $is_hapus,
+        'message' => $is_hapus ? 'Produk berhasil dihapus' : 'Produk gagal dihapus atau tidak ditemukan'
+      ];
+      $status = $is_hapus ? 200 : 404;
+    } catch (Exception $e) {
+      $res = ['success' => false, 'message' => 'Teerjadi kesalahan saat menghapus produk'];
+      $status = 500;
+    }
+    break;
+
+  default:
+    $res = ['success' => false, 'message' => 'Metode tidak didukung'];
+    $status = 404;
+}
+
+respond_json($res, $status);
+<?php
+
+models('Kategori');
+require_once ROOT_PATH . '/config/api_init.php';
+
+// Ambil ID kategori (untuk Read One, PUT, DELETE)
+$id_kategori = isset($_GET['id']) ? intval($_GET['id']) : null;
+
+// Logika Penanganan Berdasarkan Metode HTTP
+$res = [];
+$status = 200;
+switch ($method) {
+  case 'GET':
+    // GET /api/kategori?mode=all
+    if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
+      $kategori = getAllKategori();
+      $res = ['success' => true, 'data' => $kategori];
+      break;
+    }
+    // GET /api/kategori?id=1
+    if ($id_kategori) {
+      $kategori = findKategori($id_kategori);
+      if ($kategori) {
+        $res = ['success' => true, 'data' => $kategori];
+      } else {
+        $res = ['success' => false, 'message' => 'Kategori tidak ditemukan'];
+        $status = 404;
+      }
+      break;
+    }
+
+    // GET /api/kategori
+    $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
+    $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    try {
+      [$kategori, $total] = getKategoriList($page, $limit, $search);
+      $res = [
+        'success' => true,
+        'data' => $kategori,
+        "pagination" => [
+          "total" => intval($total),
+          "page" => $page,
+          "limit" => $limit,
+          "total_pages" => ceil($total / $limit)
+        ]
+      ];
+    } catch (Exception $e) {
+      $res = ["success" => false, "message" => $e->getMessage()];
+      $status = 500;
+    }
+    break;
+
+  case 'POST':
+    api_require_admin();
+    // POST /api/kategori
+    if (empty($input_data['nama_kategori'])) {
+      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
+      $status = 422;
+      break;
+    }
+
+    $is_tambah = tambahKategori($input_data);
+
+    if ($is_tambah) {
+      $res = ['success' => true, 'message' => 'Kategori berhasil ditambahkan'];
+      $status = 201;
+    } else {
+      $res = ['success' => false, 'message' => 'Gagal menambahkan kategori'];
+      $status = 500;
+    }
+    break;
+
+  case 'PUT':
+    api_require_admin();
+    // PUT /api/kategori?id=1
+    if (!$id_kategori) {
+      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk update.'];
+      $status = 400;
+      break;
+    }
+
+    if (empty($input_data['nama_kategori'])) {
+      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
+      $status = 422;
+      break;
+    }
+
+    $is_edit = editKategori($id_kategori, $input_data);
+
+    if ($is_edit) {
+      $res = ['success' => true, 'message' => 'Kategori berhasil diupdate'];
+    } else {
+      $res = ['success' => false, 'message' => 'Kategori gagal diupdate atau tidak ditemukan'];
+      $status = 404;
+    }
+    break;
+
+  case 'DELETE':
+    api_require_admin();
+    // DELETE /api/kategori?id=1
+    if (!$id_kategori) {
+      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk delete.'];
+      $status = 400;
+      break;
+    }
+
+    try {
+      $is_hapus = hapusKategori($id_kategori);
+      if ($is_hapus) {
+        $res = ['success' => true, 'message' => 'Kategori berhasil dihapus'];
+      } else {
+        throw new Exception();
+      }
+    } catch (Exception $e) {
+      $res = ['success' => false, 'message' => 'Terjadi kesalahan saat menghapus kategori'];
+      $status = 404;
+    }
+    break;
+
+  default:
+    $res = ['success' => false, 'message' => 'Metode ' . $method . ' tidak didukung.'];
+    $status = 405;
+}
+// respon
+respond_json($res, $status);
+<?php
+models('Transaksi');
+models('DetailTransaksi');
+models('Produk');
+
+
+require_once ROOT_PATH . '/config/api_init.php';
+
+$res = [];
+$status = 200;
+
+api_require_admin();
+
+switch ($method) {
+  case 'GET':
+    // ambil 7 hari terakhir (start..end)
+    $start = date('Y-m-d', strtotime('-6 days')); // 7 hari termasuk hari ini
+    $end = date('Y-m-d');
+
+    // ambil transaksi 7 hari terakhir via existing function (1 query ke DB yang kamu punya)
+    // set limit besar agar semua trx 7 hari terambil (atau sesuaikan)
+    [$daftar, $total] = getTransaksiList(1, 10000, null, $start, $end, null);
+
+    // inisialisasi perhitungan
+    $hariIni = date('Y-m-d');
+    $penjualan7 = [];
+    for ($i = 6; $i >= 0; $i--) {
+      $tgl = date('Y-m-d', strtotime("-$i days"));
+      $penjualan7[$tgl] = 0.0;
+    }
+
+    // hitung penjualan per hari dari daftar
+    foreach ($daftar as $trx) {
+      $tgl = date('Y-m-d', strtotime($trx['tanggal_transaksi']));
+      $totalHarga = floatval($trx['total_harga']);
+      if (isset($penjualan7[$tgl])) $penjualan7[$tgl] += $totalHarga;
+    }
+
+    // konversi chart
+    $chart = [];
+    foreach ($penjualan7 as $tgl => $tot) {
+      $chart[] = ['tanggal' => $tgl, 'total' => $tot];
+    }
+
+    // transaksi terbaru: ambil 5 terbaru dari daftar (daftar sudah diurut DESC di getTransaksiList)
+    $transaksi_terbaru = array_slice($daftar, 0, 5);
+
+    // gunakan fungsi model untuk metrik lainnya (single-query masing2)
+    $produk_terjual_hari_ini = getProdukTerjualByDate($hariIni);
+    $pendapatan_hari_ini = getPendapatanByDate($hariIni);
+    $pendapatan_kemarin = getPendapatanByDate(date('Y-m-d', strtotime('-1 day')));
+    $produk_hampir_habis = getProdukHampirHabis(5); // dibawah 5
+
+    // hitung persentase kenaikan (jaga pembagi 0)
+    $persentase_kenaikan = 0.0;
+    if ($pendapatan_kemarin > 0) {
+      $persentase_kenaikan = round((($pendapatan_hari_ini - $pendapatan_kemarin) / $pendapatan_kemarin) * 100, 2);
+    } elseif ($pendapatan_hari_ini > 0) {
+      $persentase_kenaikan = 100.0; // dari 0 ke > 0
+    }
+
+    $res = [
+      'success' => true,
+      'data' => [
+        'transaksi_hari_ini' => intval(array_reduce($daftar, function ($carry, $trx) use ($hariIni) {
+          return $carry + (date('Y-m-d', strtotime($trx['tanggal_transaksi'])) === $hariIni ? 1 : 0);
+        }, 0)),
+        'pendapatan_hari_ini' => $pendapatan_hari_ini,
+        'produk_terjual_hari_ini' => intval($produk_terjual_hari_ini),
+        'persentase_kenaikan' => $persentase_kenaikan,
+        'produk_hampir_habis' => $produk_hampir_habis,
+        'transaksi_terbaru' => $transaksi_terbaru,
+        'penjualan_7_hari' => $chart
+      ]
+    ];
+    break;
+  case 'POST':
+  case 'PUT':
+  case 'DELETE':
+
+  default:
+    $res = ['success' => false, 'message' => "Metode tidak didukung: $method"];
+    $status = 405;
+}
+
+respond_json($res, $status);
+<?php
+
+models('user');
+require ROOT_PATH . '/config/api_init.php';
+
+$logout = $_GET['logout'] ?? null;
+$login = $_GET['login'] ?? null;
+
+$res = [];
+$status = 200;
+switch ($method) {
+  case "GET":
+    // Logout /api/auth?logout=true
+    if ($logout) {
+      if (isset($_SESSION['user'])) {
+        unset($_SESSION['user']);
+        setcookie('user', '', time() - 86400, '/'); // Hapus cookie
+        $res = ['success' => true, 'message' => 'Logout berhasil.'];
+      } else {
+        $res = ['success' => false, 'message' => 'Gagal logout.'];
+        $status = 400;
+      }
+      break;
+    }
+
+  case "POST":
+    // login
+    if ($login) {
+      if (!$input_data['email'] || !$input_data['password']) {
+        $res = ['success' => false, 'message' => 'email dan password wajib di isi.'];
+        $status = 400;
+        break;
+      }
+      $user = findUserByEmail($input_data['email']);
+      if ($user && password_verify($input_data['password'], $user['password'])) {
+        // Login berhasil
+        // Jika "Remember Me" dicentang, set cookie (opsional)
+        if (isset($input_data['remember-me'])) {
+          setcookie('user', serialize($user), time() + 60 * 60 * 24 * 30, '/'); // Cookie berlaku selama 1 bulan
+        }
+        unset($user['password']);
+        $_SESSION['user'] = $user;
+        $res = ['success' => true, 'message' => 'Login berhasil.', "user" => $user];
+        break;
+      } else {
+        $res = ['success' => false, 'message' => 'Email atau kata sandi salah.'];
+        $status = 400;
+        break;
+      }
+    }
+}
+
+respond_json($res, $status);
+
+
+
+
+--- halaman ---
+<?php
+$pageTitle = "Dashboard Admin";
+include INCLUDES_PATH . "/admin/layout/header.php";
+?>
+
+<div x-data="dashboardAdminPage()" x-init="fetchDashboard()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-6">
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Dashboard Admin</h1>
+      <p class="text-sm text-gray-500">Pantau statistik dan aktivitas terbaru di GG-Mart.</p>
+    </div>
+    <div class="text-sm text-gray-500">
+      <span x-text="formatDate(now)"></span>
+    </div>
+  </div>
+
+  <!-- STATISTIC CARDS (responsive) -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+      <p class="text-gray-500 text-sm">Total Kategori</p>
+      <h2 class="text-2xl font-bold text-gg-primary mt-1" x-text="stats.kategori"></h2>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+      <p class="text-gray-500 text-sm">Total Produk</p>
+      <h2 class="text-2xl font-bold text-gg-primary mt-1" x-text="stats.produk"></h2>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+      <p class="text-gray-500 text-sm">Transaksi Hari Ini</p>
+      <h2 class="text-2xl font-bold text-gg-primary mt-1" x-text="stats.transaksi_hari_ini"></h2>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+      <p class="text-gray-500 text-sm">Pendapatan Hari Ini</p>
+      <h2 class="text-2xl font-bold text-green-600 mt-1" x-text="formatRupiah(stats.pendapatan_hari_ini)"></h2>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+      <p class="text-gray-500 text-sm">Produk Terjual Hari Ini</p>
+      <h2 class="text-2xl font-bold text-blue-600 mt-1" x-text="stats.produk_terjual_hari_ini"></h2>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition flex flex-col justify-between">
+      <div>
+        <p class="text-gray-500 text-sm">Kenaikan Penjualan</p>
+        <h2 class="text-2xl font-bold mt-1" :class="stats.persentase_kenaikan >= 0 ? 'text-green-600' : 'text-red-600'"
+          x-text="(stats.persentase_kenaikan >= 0 ? '+' : '') + stats.persentase_kenaikan + '%'"></h2>
+      </div>
+      <div class="text-xs text-gray-400 mt-2">vs kemarin</div>
+    </div>
+  </div>
+
+  <!-- CHART + RECENT + LOW-STOCK -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- CHART -->
+    <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold text-neutral-800">Grafik Penjualan 7 Hari Terakhir</h3>
+      </div>
+
+      <div x-show="loading" class="py-8 flex items-center justify-center">
+        <?php include INCLUDES_PATH . '/loading.php' ?>
+      </div>
+
+      <canvas x-show="!loading" id="chartPenjualan" height="120"></canvas>
+    </div>
+
+    <!-- RIGHT COLUMN: Recent + Low Stock -->
+    <div class="space-y-6">
+      <!-- TRANSAKSI TERBARU -->
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h4 class="font-semibold mb-3">Transaksi Terbaru</h4>
+        <template x-if="loading">
+          <div class="py-6 flex items-center justify-center">
+            <?php include INCLUDES_PATH . '/loading.php' ?>
+          </div>
+        </template>
+
+        <template x-if="!loading && transaksi.length === 0">
+          <p class="text-sm text-gray-500">Belum ada transaksi terbaru</p>
+        </template>
+
+        <ul class="divide-y divide-gray-200 max-h-[300px] overflow-y-auto" x-show="!loading && transaksi.length">
+          <template x-for="t in transaksi" :key="t.kode_transaksi">
+            <li class="py-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-sm font-semibold" x-text="t.kode_transaksi"></p>
+                  <p class="text-xs text-gray-500" x-text="formatDateTime(t.tanggal_transaksi)"></p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-bold text-green-600" x-text="formatRupiah(t.total_harga)"></p>
+                  <p class="text-xs text-gray-400" x-text="t.metode_bayar"></p>
+                </div>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <!-- PRODUK HAMPIR HABIS -->
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h4 class="font-semibold mb-3 text-red-600">Produk Hampir Habis</h4>
+        <template x-if="stats.produk_hampir_habis.length === 0">
+          <p class="text-sm text-gray-500">Semua stok aman 🎉</p>
+        </template>
+
+        <ul class="divide-y divide-gray-200 max-h-48 overflow-y-auto" x-show="stats.produk_hampir_habis.length">
+          <template x-for="p in stats.produk_hampir_habis" :key="p.kode_produk">
+            <li class="py-2 flex justify-between items-center">
+              <div class="text-sm" x-text="p.nama_produk"></div>
+              <div class="text-sm font-semibold text-red-500" x-text="'Stok: ' + p.stok"></div>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="<?= ASSETS_URL ?>/js/dashboardAdminPage.js"></script>
+<?php include INCLUDES_PATH . "/admin/layout/footer.php"; ?>
+<?php
+$pageTitle = "Riwayat Transaksi";
+include INCLUDES_PATH . "admin/layout/header.php";
+?>
+
+<div x-data="riwayatTransaksiPage()" x-init="fetchTransaksi()" class="bg-gray-50 space-y-3">
+
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-3 lg:p-5">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Riwayat Transaksi</h1>
+      <p class="text-sm text-gray-500">Pantau dan kelola seluruh riwayat transaksi GG-Mart dari sini.</p>
+    </div>
+    <div>
+      <button @click="showFilter = !showFilter" class="md:hidden bg-gg-primary rounded-md flex    text-white items-center justify-center gap-2">
+        Filter
+        <!-- SVG Filter Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 " fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 14.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 019 17v-2.586L3.293 6.707A1 1 0 013 6V4z" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTER -->
+  <div :class="showFilter ? 'block' : 'hidden md:block'"
+    x-transition:enter="transition transform ease-out duration-300"
+    x-transition:enter-start="opacity-0 -translate-y-2"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition transform ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 -translate-y-2"
+    class="px-3 md:px-5">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+      <label>Cari transaksi</label>
+      <form @submit.prevent="doSearch" class="flex items-center shadow-sm">
+        <input type="text" x-model="search" placeholder="TRX_12345678"
+          class="border rounded px-2 py-1 w-full sm:w-auto">
+        <button type="submit"
+          class="hidden"></button>
+      </form>
+      <label>Tanggal Mulai
+        <input type="date" x-model="filter.start"
+          class="w-full sm:w-auto">
+      </label>
+      <label>Tanggal Selesai
+        <input type="date" x-model="filter.end"
+          class="w-full sm:w-auto">
+      </label>
+      <label>
+        Metode Pembayaran
+        <select x-model="filter.metode" class="w-full sm:w-auto">
+          <option value="">Semua Metode</option>
+          <option value="TUNAI">Tunai</option>
+          <option value="QRIS">QRIS</option>
+        </select>
+      </label>
+      <button @click="goPage(1)"
+        class="bg-gg-accent hover:opacity-80 text-white px-4 py-1 sm:py-2 rounded w-full sm:w-auto">Tampilkan</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <?php include INCLUDES_PATH . "/loading.php" ?>
+
+
+  <!-- TABEL RIWAYAT TRANSAKSI -->
+  <?php include INCLUDES_PATH . "/admin/table_riwayat_transaksi.php" ?>
+
+  <!-- KOSONG -->
+  <template x-if="!loading && transaksi.length === 0">
+    <div class="bg-white rounded-lg shadow p-12 text-center border border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800">tidak ada transaksi</h3>
+    </div>
+  </template>
+
+  <!-- MODAL DETAIL TRANSAKSI -->
+  <div x-show="modalDetail" class="fixed inset-0 -top-10 bg-black/40 flex items-center justify-center z-50 px-2 sm:px-0" @click.self="modalDetail=false">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-4 sm:p-6 space-y-4">
+      <div class="flex border-b pb-2 justify-between">
+        <h2 class="text-lg font-bold text-gray-800">Detail Transaksi</h2>
+        <!-- Tombol batal -->
+        <button @click="batalTransaksi" class="bg-red-500 text-white hover:opacity-90">
+          Batalkan transaksi ini?
+        </button>
+      </div>
+      <template x-if="detail">
+        <div class="overflow-x-auto">
+          <p><strong>Kode:</strong> <span x-text="detail.kode_transaksi"></span></p>
+          <p><strong>Tanggal:</strong> <span x-text="formatDateTime(detail.tanggal_transaksi)"></span></p>
+          <p><strong>Metode:</strong> <span x-text="detail.metode_bayar"></span></p>
+          <table class="w-full mt-3 border-t text-sm min-w-sm overflow-x-auto">
+            <thead>
+              <tr class="text-left bg-gray-50">
+                <th class>Produk</th>
+                <th class="text-center">Jumlah</th>
+                <th class=text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="d in detail.detail" :key="d.kode_produk">
+                <tr>
+                  <td x-text="d.nama_produk"></td>
+                  <td class="text-center" x-text="d.jumlah"></td>
+                  <td class="text-right" x-text="formatRupiah(d.subtotal)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="text-right font-bold mt-3 text-gray-800">
+            Total: <span x-text="formatRupiah(detail.total_harga)"></span>
+          </div>
+        </div>
+      </template>
+      <div class="text-right">
+        <button @click="modalDetail=false" class="mt-3 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="<?= ASSETS_URL ?>/js/riwayatTransaksiPage.js"></script>
+
+<?php include INCLUDES_PATH . "/admin/layout/footer.php"; ?>
+<?php
+$pageTitle = "input Transaksi";
+include INCLUDES_PATH . "admin/layout/header.php";
+?>
+
+<div x-data="transaksiPage()" x-init="fetchProduk()" class="bg-gray-50 space-y-3">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+    <!-- LEFT: Daftar Produk -->
+    <div class="md:col-span-2 bg-white p-2 md:p-4 rounded-lg shadow-md">
+      <div class="mb-4 sticky top-0 z-10">
+        <input id="searchProduk" type="text" placeholder="Cari produk..." autofocus
+          x-model="search"
+          class="p-5 font-medium rounded-none hover:scale-100 focus:scale-100 text-2xl bg-white text-black border-black focus:ring-0"
+          @input.debounce.300="fetchProduk()"
+          @keydown.enter.prevent="tambahProdukDariInput()">
+      </div>
+      <div class="min-h-[70dvh]">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 overflow-y-auto">
+          <!-- <template x-for="p in produk" :key="p.kode_produk">
+            <div class="border border-gray-200 hover:scale-95 p-3 rounded-lg hover:shadow-lg transition cursor-pointer"
+              @click="tambahKeranjang(p)">
+              <img :src="p.gambar ? `${uploadsUrl}/${p.gambar}` : `${assetsUrl}/img/no-image.webp`"
+                class="w-full h-24 object-cover rounded-md mb-2">
+              <h2 class="text-sm font-semibold text-gray-700" x-text="p.nama_produk"></h2>
+              <p class="text-xs text-gray-500" x-text="p.nama_kategori"></p>
+              <p class="text-sm font-bold text-gray-900 mt-1" x-text="formatRupiah(p.harga)"></p>
+              <p class="text-xs text-gray-400" x-text="'Stok: ' + p.stok"></p>
+            </div>
+          </template> -->
+          <template x-for="p in produk" :key="p.kode_produk">
+            <div
+              class="relative border border-gray-200 hover:scale-95 rounded-lg hover:shadow-lg transition cursor-pointer"
+              @click="tambahKeranjang(p)">
+
+              <!-- GAMBAR PRODUK -->
+              <div class="relative">
+                <img :src="p.gambar ? `${uploadsUrl}/${p.gambar}` : `${assetsUrl}/img/no-image.webp`"
+                  class="w-full h-24 object-cover rounded-md mb-2">
+
+                <!-- BADGE STOK -->
+                <span
+                  class="absolute top-1 right-1 text-[11px] font-semibold px-2 py-[2px] rounded-full text-neutral-800 shadow transition-all duration-200"
+                  :style="{
+                    backgroundColor: p.stok == 0
+                      ? 'rgba(239, 68, 68, 1)'        // merah (habis)
+                      : p.stok <= 10
+                        ? `rgba(234, 179, 8, ${Math.min(1, Math.max(0.1, p.stok / 10))})`   // kuning
+                        : `rgba(34, 197, 94, ${Math.min(1, Math.max(0.1, p.stok / 100))})`   // hijau
+                  }"
+                  x-text="p.stok > 0 ? 'Stok: ' + p.stok : 'Habis'">
+                </span>
+
+
+              </div>
+              <!-- INFO PRODUK -->
+              <div class="p-3">
+                <h2 class="text-sm font-semibold text-gray-700" x-text="p.nama_produk"></h2>
+                <p class="text-xs text-gray-500" x-text="p.nama_kategori"></p>
+                <p class="text-sm font-bold text-gray-900 mt-1" x-text="formatRupiah(p.harga)"></p>
+              </div>
+            </div>
+          </template>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Keranjang -->
+    <div class="bg-white p-4 rounded-lg shadow-md flex flex-col">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Keranjang</h2>
+      <template x-if="keranjang.length === 0">
+        <p class="text-gray-500 text-sm">Belum ada produk di keranjang</p>
+      </template>
+
+      <div class="flex flex-1 flex-col space-y-2">
+        <template x-for="(item, index) in keranjang" :key="item.kode_produk">
+          <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+            <div>
+              <h3 class="font-semibold text-gray-700" x-text="item.nama_produk"></h3>
+              <p class="text-xs text-gray-500" x-text="'Harga: ' + formatRupiah(item.harga_satuan)"></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" min="1" class="w-16 text-sm"
+                x-model.number="item.jumlah" @change="updateSubtotal(index)" @input.debounce.200>
+              <p class="text-sm font-semibold" x-text="formatRupiah(item.subtotal)"></p>
+              <button @click="hapusKeranjang(index)" class="text-red-500 hover:text-red-600">&times;</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="mt-4 border-t pt-4 space-y-2">
+        <div class="flex justify-between text-neutral-800 font-bold">
+          <span>Total</span>
+          <span x-text="formatRupiah(totalHarga)"></span>
+        </div>
+
+        <div>
+          <label>Metode Bayar</label>
+          <select x-model="metodeBayar"
+            class="">
+            <option value="TUNAI">Tunai</option>
+            <option value="QRIS">QRIS</option>
+          </select>
+        </div>
+        <button @click="resetKeranjang()"
+          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-md transition w-full">Reset Keranjang</button>
+        <button @click="simpanTransaksi()"
+          class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg shadow-md transition">
+          Simpan Transaksi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="<?= ASSETS_URL . 'js/transaksiPage.js' ?>"></script>
+<?php
+include INCLUDES_PATH . "admin/layout/footer.php";
+
+<?php
+$act = $_GET['act'] ?? 'tambah';
+$id  = $_GET['id'] ?? null;
+$pageTitle = ($act === 'edit') ? "Edit Produk" : "Tambah Produk";
+
+include INCLUDES_PATH . "admin/layout/header.php";
+?>
+
+<div x-data="produkFormPage('<?= $act ?>', '<?= $id ?>')" x-init="initPage()"
+  class="p-1 lg:p-5 bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-2 md:p-6 space-y-6">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-neutral-800" x-text="formTitle"></h1>
+      <a :href="baseUrl + '/admin/produk'" class="text-sm text-gray-500 hover:text-gg-primary">← Kembali</a>
+    </div>
+
+    <!-- FORM -->
+    <form @submit.prevent="submitForm" enctype="multipart/form-data" class="space-y-5">
+      <!-- NAMA PRODUK -->
+      <div>
+        <label>Nama Produk <span class="text-red-500">*</span></label>
+        <input type="text" x-model="form.nama_produk"
+          placeholder="Nama produk" autofocus required>
+      </div>
+
+      <!-- KATEGORI -->
+      <div>
+        <label>Kategori</label>
+        <div class="relative">
+          <input type="text"
+            x-model="kategoriKeyword"
+            @focus="kategoriOpen = true"
+            @blur="setTimeout(() => kategoriOpen = false, 200)"
+            @input="filterKategori"
+            placeholder="Ketik untuk mencari kategori..."
+            autocomplete="off">
+
+          <div x-show="kategoriOpen && kategoriFiltered.length > 0"
+            class="absolute z-20 mt-1 w-full bg-white border-gg-primary/50 border-2 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <template x-for="k in kategoriFiltered" :key="k.id_kategori">
+              <div
+                @click="selectKategori(k)"
+                class="px-3 py-2 hover:bg-gg-primary/50 cursor-pointer"
+                x-text="k.nama_kategori">
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- HARGA -->
+      <div>
+        <label>Harga (Rp) <span class="text-red-500">*</span></label>
+        <input type="number" x-model="form.harga"
+          placeholder="Contoh: 25000" required>
+      </div>
+
+      <!-- STOK -->
+      <div>
+        <template x-if="!isEdit">
+          <div>
+            <label>Stok Awal</label>
+            <input type="number" x-model="form.stok" placeholder="0">
+          </div>
+        </template>
+
+        <template x-if="isEdit">
+          <div class="space-y-3">
+            <div>
+              <label>Stok Saat Ini</label>
+              <input type="number" x-model="form.stok" readonly
+                class="cursor-not-allowed bg-gray-200">
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-3">
+              <div class="flex-1">
+                <label>Tambah Stok</label>
+                <input type="number" x-model.number="stokTambah"
+
+                  placeholder="0">
+              </div>
+              <div class="flex-1">
+                <label>Kurangi Stok</label>
+                <input type="number" x-model.number="stokKurang" placeholder="0">
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+
+      <!-- DESKRIPSI -->
+      <div>
+        <label>Deskripsi</label>
+        <textarea x-model="form.deskripsi" rows="4"></textarea>
+      </div>
+
+      <!-- GAMBAR -->
+      <div>
+        <label>Gambar Produk</label>
+        <input type="file" @change="onFileChange" accept="image/*">
+        <template x-if="preview">
+          <img :src="preview" alt="Preview Gambar" class="mt-3 w-40 h-40 object-cover rounded-lg shadow">
+        </template>
+      </div>
+
+      <!-- TOMBOL -->
+      <div class="flex justify-end gap-3">
+        <a :href="baseUrl + '/admin/produk'"
+          class="px-5 text-gray-600 hover:bg-gray-100">Batal</a>
+        <button type="submit"
+          class="px-5 py-2 bg-gg-primary text-white rounded-lg hover:bg-gg-primary-hover transition"
+          x-text="isEdit ? 'Simpan Perubahan' : 'Tambah Produk'"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script src="<?= ASSETS_URL . '/js/produkFormPage.js' ?>"></script>
+
+<?php include INCLUDES_PATH . "/admin/layout/footer.php"; ?>
+<?php
+$pageTitle = "Kelola Produk";
+include INCLUDES_PATH . "/admin/layout/header.php";
+?>
+
+<div x-data="kelolaProdukPage()" x-init="fetchProduk()" class="bg-gray-50 space-y-3">
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-3 lg:p-5">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Kelola Produk</h1>
+      <p class="text-sm text-gray-500">Pantau dan kelola seluruh produk GG-Mart dari sini.</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- SEARCH -->
+      <form @submit.prevent="doSearch" class="flex items-center shadow-sm">
+        <input type="text" x-model="search" placeholder="Cari produk..."
+          class="rounded-r-none w-48 md:w-64">
+        <button type="submit"
+          class="bg-gg-primary text-white rounded-r-md font-medium">Cari</button>
+      </form>
+
+      <!-- ADD -->
+      <a :href="baseUrl + '/admin/produk/form?act=tambah'"
+        class="bg-gg-accent hover:opacity-90 text-white">
+        <span class="text-lg leading-none">+</span>
+        <span class="hidden md:inline">Tambah</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <?php include INCLUDES_PATH . '/loading.php' ?>
+
+  <!-- TABEL PRODUK -->
+  <?php include INCLUDES_PATH . '/admin/table_produk.php' ?>
+
+  <!-- KOSONG -->
+  <template x-if="!loading && produk.length === 0">
+    <div class="bg-white rounded-lg shadow p-12 text-center border border-gray-200">
+      <img :src="baseUrl + '/assets/img/no-image.webp'" alt="Tidak ada produk"
+        class="mx-auto w-28 h-28 opacity-60 mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">Tidak ada produk</h3>
+      <p class="text-sm text-neutral-500 mb-4">Tambahkan Produk baru untuk mulai berjualan.</p>
+      <a :href="baseUrl + '/admin/produk/form?act=tambah'"
+        class="inline-block bg-gg-primary hover:bg-gg-primary-hover text-white px-6 py-2 rounded-md font-medium shadow-sm">Tambah
+        Produk</a>
+    </div>
+  </template>
+
+</div>
+
+<script src="<?= ASSETS_URL . 'js/kelolaProdukPage.js' ?>"></script>
+
+<?php include INCLUDES_PATH . "admin/layout/footer.php"; ?>
+<?php
+$pageTitle = "Kelola Kategori";
+include INCLUDES_PATH . "admin/layout/header.php";
+?>
+
+<div x-data="kelolaKategoriPage()" x-init="fetchKategori()" class=" bg-gray-50 min-h-[100dvh] space-y-3">
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center lg:p-5 p-3 md:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-neutral-800">Kelola Kategori</h1>
+      <p class="text-sm text-gray-500">Pantau dan kelola seluruh kategori GG-Mart dari sini.</p>
+    </div>
+
+    <!-- SEARCH + ADD -->
+    <div class="flex items-center gap-3">
+      <form @submit.prevent="doSearch" class="flex items-center shadow-sm">
+        <input type="text" x-model="search" placeholder="Cari kategori..."
+          class="rounded-r-none w-48 md:w-64">
+        <button type="submit"
+          class="bg-gg-primary text-white rounded-r-md font-medium">Cari</button>
+      </form>
+
+      <a :href="baseUrl + '/admin/kategori/form?act=tambah'"
+        class="bg-gg-accent hover:opacity-90 text-white">
+        <span class="text-lg">+</span>
+        <span class="hidden md:inline">Tambah</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <?php include INCLUDES_PATH . '/loading.php' ?>
+
+  <!-- TABEL KATEGORI -->
+  <?php include INCLUDES_PATH . '/admin/table_kategori.php' ?>
+
+
+  <!-- KOSONG -->
+  <template x-if="!loading && kategori.length === 0">
+    <div class="bg-white rounded-lg shadow p-12 text-center border border-gray-200">
+      <h3 class="text-lg font-semibold text-neutral-900S">Tidak ada kategori</h3>
+      <p class="text-sm text-neutral-500 mb-4">Tambahkan kategori baru untuk mulai mengelola produk.</p>
+      <a :href=" baseUrl + '/admin/kategori/form?act=tambah'"
+        class="inline-block bg-gg-primary hover:bg-gg-primary/80 text-white px-6 py-2 rounded-md font-medium shadow-sm">Tambah
+        Kategori</a>
+    </div>
+  </template>
+
+</div>
+
+
+<script src="<?= ASSETS_URL . 'js/kelolaKategoriPage.js' ?>"></script>
+<?php include INCLUDES_PATH . "admin/layout/footer.php"; ?>
+
+
+</main>
+<?php
+include INCLUDES_PATH . "/flash.php";
+include INCLUDES_PATH . 'app.js.php';
+?>
+<script src="<?= ASSETS_URL ?>/js/app.js""></script>
+</body>
+
+</html><div x-data="sidebarAdmin()" x-show="!fullscreen" x-transition.opacity>
+  <aside
+    :class="sidebarCollapse ? 'w-16' : 'w-64'"
+    class="w-16 hidden lg:flex flex-col bg-white border-r shadow-md transition-all duration-300 fixed inset-y-0 left-0 z-10">
+
+    <!-- Header Sidebar -->
+    <div class="flex items-center justify-between px-4 py-2 border-b">
+      <span x-show="!sidebarCollapse" class="font-bold text-xl text-gg-primary">
+        Menu
+      </span>
+      <button x-show="!sidebarCollapse" @click="toggleSidebar" class="p-2 rounded hover:bg-gray-100" title="Tutup Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+        </svg>
+      </button>
+      <button @click="toggleSidebar" class="p-2 rounded hover:bg-gray-100" x-show="sidebarCollapse" title="Buka Sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Menu -->
+    <nav class="flex-1 p-2 space-y-2">
+      <template x-for="menu in listMenuAdmin">
+        <a :href="baseUrl + menu.url" class="w-full justify-start hover:bg-gg-primary/70 hover:text-white" :class="window.location.pathname == menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'" :title="menu.title">
+          <span x-html="menu.ikon"></span>
+          <span x-show="!sidebarCollapse" class="ml-3" x-text="menu.title"></span>
+        </a>
+      </template>
+    </nav>
+  </aside>
+
+
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div
+    x-show="sidebarOpen"
+    class="fixed inset-0 flex z-30 lg:hidden"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 -translate-x-full"
+    x-transition:enter-end="opacity-100 translate-x-0"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100 translate-x-0"
+    x-transition:leave-end="opacity-0 -translate-x-full">
+
+    <div @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50"></div>
+
+    <aside class="relative w-64 bg-white shadow-md flex flex-col z-50">
+      <div class="flex items-center justify-between p-4 border-b">
+        <span><img :src="assetsUrl  + '/logo.png'" alt="" class="h-10 inline-block"></span>
+        <span class="text-gg-primary font-bold">Menu</span>
+        <button @click="sidebarOpen = false" class="p-2 rounded hover:bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+      <nav class="flex-1 p-2 space-y-2">
+        <template x-for="menu in listMenuAdmin">
+          <a :href="baseUrl + menu.url" class="w-full gap-2 hover:text-white justify-start hover:bg-gg-primary/70" :class="window.location.pathname==menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'">
+            <span x-html="menu.ikon"></span>
+            <span x-text="menu.title"></span>
+          </a>
+        </template>
+      </nav>
+    </aside>
+  </div>
+</div>
+<script src=" <?= ASSETS_URL . 'js/sidebarAdmin.js' ?>"></script>
+<!-- NAVBAR -->
+<header x-data="headerAdmin()" class="flex items-center justify-between bg-white border-b px-4 py-2 shadow-md relative z-10"
+  :class="sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64'" x-show="!fullscreen" x-transition.opacity>
+  <div class="flex items-center space-x-2">
+    <!-- Tombol menu (mobile) -->
+    <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded hover:bg-gray-100">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
+    <span><img :src="assetsUrl + '/logo.png'" alt="MyApp Logo" class="h-10"></span>
+  </div>
+  <div class="flex items-center space-x-4">
+    <button @click="logout">Logout</button>
+  </div>
+</header>
+
+<script>
+  const headerAdmin = () => ({
+    logout() {
+      fetch(`${baseUrl}/api/auth?logout=true`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showFlash(data.message)
+            setInterval(() => {
+              window.location.href = baseUrl
+            }, 1000);
+          } else {
+            showFlash(data.message, 'error')
+          }
+        })
+        .catch(error => console.error(error));
+    }
+  })
+</script>
+<?php
+page_require_admin();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="<?= ASSETS_URL . 'favicon.ico' ?>" type="image/x-icon">
+  <title>GG MART | <?= $pageTitle ?></title>
+  <!-- <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script> -->
+  <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/app.css">
+  <script src="<?= ASSETS_URL . '/js/cdn.min.js' ?>" defer></script>
+  <link rel="manifest" href="<?= BASE_URL . '/manifest.json' ?>">
+</head>
+
+<body class="overflow-y-auto h-[100dvh] flex flex-col bg-gray-100"
+  x-data="{ 
+    sidebarOpen: false,
+    sidebarCollapse: JSON.parse(localStorage.getItem('sidebarCollapse')) || false,
+    fullscreen: false,
+    toggleSidebar() {
+      this.sidebarCollapse = !this.sidebarCollapse;
+      localStorage.setItem('sidebarCollapse', JSON.stringify(this.sidebarCollapse));
+    } 
+  }"
+  x-on:keydown.window="
+    if($event.key === 'Escape') { fullscreen = false;}
+    if ($event.ctrlKey && $event.shiftKey && $event.key === 'F') {
+      $event.preventDefault();
+      fullscreen = !fullscreen;
+    }
+  ">
+
+  <?php
+  include INCLUDES_PATH . '/admin/layout/navbar.php';
+
+  include INCLUDES_PATH . '/admin/layout/sidebar.php';
+  ?>
+  <main class="flex-1 overflow-y-auto mb-3"
+    :class="fullscreen ? 'm-0 p-0' : (sidebarCollapse ? 'lg:ml-16' : 'lg:ml-64')">

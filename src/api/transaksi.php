@@ -1,7 +1,7 @@
 <?php
 models('Transaksi');
 models('DetailTransaksi');
-models('Produk'); // untuk cek stok
+models('Produk');
 
 
 require_once ROOT_PATH . '/config/api_init.php';
@@ -31,8 +31,8 @@ switch ($method) {
     }
 
     // GET /api/transaksi
-    $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
-    $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $page   = $_GET['halaman'] ?? 1;
+    $limit  = $_GET['limit'] ?? 10;
     $search = trim($_GET['search'] ?? null);
     $start  = $_GET['start'] ?? null;
     $end    = $_GET['end'] ?? null;
@@ -100,15 +100,8 @@ switch ($method) {
         ]);
 
         // update stok & terjual
-        editProduk($item['kode_produk'], [
-          'nama_produk' => $produk['nama_produk'],
-          'harga' => $produk['harga'],
-          'stok' => $produk['stok'] - $jumlah,
-          'terjual' => $produk['terjual'] + $jumlah,
-          'id_kategori' => $produk['id_kategori'],
-          'deskripsi' => $produk['deskripsi'],
-          'gambar' => $produk['gambar']
-        ]);
+        updateStokProduk($item['kode_produk'], $produk['stok'] - $jumlah);
+        updateTerjualProduk($item['kode_produk'], $produk['terjual'] + $jumlah);
       }
       $conn->commit();
       $res = ['success' => true, 'message' => 'Transaksi berhasil dibuat', 'data' => ['id' => $id_transaksi_baru, 'kode_transaksi' => $kode_transaksi]];

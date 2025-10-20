@@ -4,10 +4,11 @@ $pageTitle = 'Login';
 require INCLUDES_PATH . "/user/layout/header.php"
 ?>
 
-<div class="min-h-[100dvh] flex items-center justify-center bg-gray-50" x-data="loginPage()">
+<div class="h-full flex items-center justify-center bg-gray-50" x-data="loginPage()">
   <div class="max-w-md w-full space-y-6 bg-white p-8 shadow-md rounded-md">
-    <div>
-      <h2 class="mt-3 text-center text-3xl font-extrabold text-gray-900">Masuk ke akun Anda</h2>
+    <div class="text-center">
+      <p class="text-red-600 text-sm ">Hanya admin yang berhak megelolah ggmart</p>
+      <h2 class="mt-3 text-3xl font-extrabold text-gray-900">Masuk ke akun Anda</h2>
     </div>
     <form @submit.prevent="fetchLogin" class="mt-8 space-y-6">
       <div class="rounded-md shadow-sm -space-y-px">
@@ -49,4 +50,5 @@ require INCLUDES_PATH . "/user/layout/header.php"
 <script src="<?= ASSETS_URL . '/js/loginPage.js' ?>"></script>
 
 <?php
+
 require INCLUDES_PATH . "/user/layout/footer.php";

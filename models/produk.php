@@ -31,7 +31,7 @@ function getAllProduk()
   return $produk;
 }
 
-function getProdukList($page = 1, $limit = 10, $search = '')
+function getProdukList($page = 1, $limit = 10, $search = '', $order_by = 'tanggal_dibuat', $order_dir = 'DESC')
 {
   global $conn;
   $offset = ($page - 1) * $limit;
@@ -52,7 +52,7 @@ function getProdukList($page = 1, $limit = 10, $search = '')
     FROM produk p 
     LEFT JOIN kategori k ON p.id_kategori = k.id_kategori
     $where
-    ORDER BY terjual DESC
+    ORDER BY $order_by $order_dir
     LIMIT $limit OFFSET $offset
   ");
 
@@ -66,14 +66,13 @@ function getProdukList($page = 1, $limit = 10, $search = '')
 function tambahProduk($data)
 {
   global $conn;
-  $sql = "INSERT INTO produk (kode_produk, nama_produk, harga, stok, id_kategori, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO produk (kode_produk, nama_produk, harga, id_kategori, deskripsi, gambar) VALUES (?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
-    "ssiisss",
+    "ssisss",
     $data['kode_produk'],
     $data['nama_produk'],
     $data['harga'],
-    $data['stok'],
     $data['id_kategori'],
     $data['deskripsi'],
     $data['gambar']
@@ -87,9 +86,9 @@ function editProduk($kode, $data)
 {
   global $conn;
 
-  $sql = "UPDATE produk SET nama_produk=?, harga=?, stok=?, id_kategori=?, deskripsi=?";
-  $params = [$data['nama_produk'], $data['harga'], $data['stok'], $data['id_kategori'], $data['deskripsi']];
-  $types = "siiss";
+  $sql = "UPDATE produk SET nama_produk=?, harga=?, id_kategori=?, deskripsi=?";
+  $params = [$data['nama_produk'], $data['harga'], $data['id_kategori'], $data['deskripsi']];
+  $types = "siss";
 
   if (!empty($data['terjual'])) {
     $sql .= ", terjual=?";
@@ -141,4 +140,25 @@ function getProdukHampirHabis($batas = 10)
     while ($row = $res->fetch_assoc()) $out[] = $row;
   }
   return $out;
+}
+
+function updateStokProduk($kode_produk, $stok_baru)
+{
+  global $conn;
+  $sql = "UPDATE produk SET stok = ? WHERE kode_produk = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("is", $stok_baru, $kode_produk);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
+}
+function updateTerjualProduk($kode_produk, $terjual)
+{
+  global $conn;
+  $sql = "UPDATE produk SET terjual = ? WHERE kode_produk = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("is", $terjual, $kode_produk);
+  $result = $stmt->execute();
+  $stmt->close();
+  return $result;
 }

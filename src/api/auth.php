@@ -36,7 +36,7 @@ switch ($method) {
         // Login berhasil
         // Jika "Remember Me" dicentang, set cookie (opsional)
         if (isset($input_data['remember-me'])) {
-          setcookie('user', serialize($user), time() + 86400 * 30, '/'); // Cookie berlaku selama 1 bulan
+          setcookie('user', serialize($user), time() + 60 * 60 * 24 * 30, '/'); // Cookie berlaku selama 1 bulan
         }
         unset($user['password']);
         $_SESSION['user'] = $user;

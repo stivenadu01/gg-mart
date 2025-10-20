@@ -4,17 +4,10 @@ function produkFormPage(act, id) {
       nama_produk: '',
       id_kategori: '',
       harga: '',
-      stok: '',
       deskripsi: '',
       gambar: null
     },
-    stokTambah: 0,
-    stokKurang: 0,
     kategori: [],
-    kategoriOpen: false,
-    kategoriKeyword: '',
-    kategoriFiltered: [],
-    kategoriSelected: null,
     preview: null,
     isEdit: act === 'edit',
     formTitle: act === 'edit' ? 'Edit Produk' : 'Tambah Produk',
@@ -28,20 +21,6 @@ function produkFormPage(act, id) {
       const res = await fetch(`${baseUrl}/api/kategori?mode=all`);
       const data = await res.json();
       if (data.success) this.kategori = data.data;
-    },
-
-    filterKategori() {
-      const keyword = this.kategoriKeyword.toLowerCase();
-      this.kategoriFiltered = this.kategori.filter(k =>
-        k.nama_kategori.toLowerCase().includes(keyword)
-      );
-    },
-
-    selectKategori(k) {
-      this.kategoriKeyword = k.nama_kategori;
-      this.form.id_kategori = k.id_kategori;
-      this.kategoriSelected = k;
-      this.kategoriOpen = false;
     },
 
     async fetchProduk(kode) {
@@ -72,15 +51,8 @@ function produkFormPage(act, id) {
 
     async submitForm() {
       if (!this.form.id_kategori) {
-        await alert("Pilih kategori yang valid dari daftar!");
+        showFlash("Pilih kategori yang valid dari daftar!");
         return;
-      }
-
-      if (this.isEdit) {
-        const hasil = (parseInt(this.form.stok) || 0) +
-          (parseInt(this.stokTambah) || 0) -
-          (parseInt(this.stokKurang) || 0);
-        this.form.stok = Math.max(0, hasil);
       }
 
       const formData = new FormData();

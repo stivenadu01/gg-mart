@@ -12,6 +12,12 @@ module.exports = {
     "lg:ml-16",
     "lg:ml-64",
     "lg:block",
+    "bg-green-100",
+    "text-green-700",
+    "bg-green-100",
+    "text-green-700",
+    "bg-red-100",
+    "text-red-700",
 
     // Semua kombinasi warna gg- untuk bg, text, border, ring, hover, dan gradient
     {

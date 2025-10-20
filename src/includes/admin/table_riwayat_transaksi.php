@@ -41,12 +41,12 @@
           class="px-3 py-1 border rounded-md disabled:opacity-40 hover:bg-gray-100">‹</button>
         <template x-for="n in pagination.total_pages" :key="n">
           <button @click="goPage(n)"
-            :class="{'bg-gg-primary text-white shadow-sm': pagination.page === n, 'border text-gray-700 hover:bg-gray-100': pagination.page !== n}"
+            :class="{'bg-gg-primary text-white shadow-sm': pagination.page == n, 'border text-gray-700 hover:bg-gray-100': pagination.page != n}"
             class="px-3 py-1 rounded-md transition">
             <span x-text="n"></span>
           </button>
         </template>
-        <button @click="nextPage" :disabled="pagination.page === pagination.total_pages"
+        <button @click="nextPage" :disabled="pagination.page == pagination.total_pages"
           class="px-3 py-1 border rounded-md disabled:opacity-40 hover:bg-gray-100">›</button>
       </div>
     </div>

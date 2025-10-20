@@ -36,7 +36,7 @@
               <td class="text-gray-700 font-medium truncate" x-text="p.nama_kategori ?? 'Tidak Berkategori'"></td>
 
               <!-- HARGA -->
-              <td class="font-semibold text-gray-800 whitespace-nowrap" x-text="'Rp ' + formatRupiah(p.harga)"></td>
+              <td class="font-semibold text-gray-800 whitespace-nowrap" x-text="formatRupiah(p.harga)"></td>
 
               <!-- DESKRIPSI -->
               <td class="hidden md:table-cell text-gray-600 truncate max-w-xs" x-text="p.deskripsi"></td>

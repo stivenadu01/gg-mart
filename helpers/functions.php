@@ -25,7 +25,7 @@ function redirect_back($fallback = '')
 
 function is_admin()
 {
-  return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin';
+  return isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin' ? true : false;
 }
 
 function api_require_admin()
@@ -38,7 +38,7 @@ function api_require_admin()
 function page_require_admin()
 {
   if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    redirect_back();
+    redirect_back('auth/login');
   }
 }
 

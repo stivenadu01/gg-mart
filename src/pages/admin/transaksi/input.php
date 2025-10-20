@@ -17,7 +17,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
       <div class="min-h-[70dvh]">
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 overflow-y-auto">
           <!-- <template x-for="p in produk" :key="p.kode_produk">
-            <div class="border border-gray-200 hover:scale-105 p-3 rounded-lg hover:shadow-lg transition cursor-pointer"
+            <div class="border border-gray-200 hover:scale-95 p-3 rounded-lg hover:shadow-lg transition cursor-pointer"
               @click="tambahKeranjang(p)">
               <img :src="p.gambar ? `${uploadsUrl}/${p.gambar}` : `${assetsUrl}/img/no-image.webp`"
                 class="w-full h-24 object-cover rounded-md mb-2">

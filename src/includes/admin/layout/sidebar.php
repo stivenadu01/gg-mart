@@ -23,7 +23,7 @@
     <!-- Menu -->
     <nav class="flex-1 p-2 space-y-2">
       <template x-for="menu in listMenuAdmin">
-        <a :href="baseUrl + menu.url" class="w-full justify-start hover:bg-gg-primary/70 hover:text-white" :class="window.location.pathname == menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'" :title="menu.title">
+        <a :href="baseUrl + menu.url" class="w-full justify-start hover:bg-gg-primary/70 hover:text-white" :class="location.pathname == menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'" :title="menu.title">
           <span x-html="menu.ikon"></span>
           <span x-show="!sidebarCollapse" class="ml-3" x-text="menu.title"></span>
         </a>

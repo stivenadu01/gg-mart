@@ -9,7 +9,7 @@ page_require_admin();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="shortcut icon" href="<?= ASSETS_URL . 'favicon.ico' ?>" type="image/x-icon">
-  <title>GG MART | <?= $pageTitle ?></title>
+  <title><?= $pageTitle ?> | GG MART | Toko Pangan</title>
   <!-- <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/alpinejs" defer></script> -->
   <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/app.css">

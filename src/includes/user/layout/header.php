@@ -13,5 +13,9 @@
   <link rel="manifest" href="<?= BASE_URL . '/manifest.json' ?>">
 </head>
 
-<body>
-  <a class="bg-green-500" href="<?= BASE_URL . '/auth/login' ?>">Login</a>
+<body class="overflow-y-auto h-[100dvh] flex flex-col bg-gray-100" x-data>
+
+  <?php
+  include INCLUDES_PATH . '/user/layout/navbar.php';
+  ?>
+  <main class="flex-1 overflow-y-auto">

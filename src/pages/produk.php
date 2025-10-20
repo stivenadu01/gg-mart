@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'home';
+$pageTitle = 'Produk';
 include INCLUDES_PATH . "/user/layout/header.php";
 ?>
 
