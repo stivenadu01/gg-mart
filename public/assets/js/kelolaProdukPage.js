@@ -14,6 +14,7 @@ function kelolaProdukPage() {
       total_pages: 1
     },
     loading: false,
+    submitting: false,
 
     async fetchProduk(page = 1) {
       this.loading = true;
@@ -33,7 +34,7 @@ function kelolaProdukPage() {
 
         if (data.success) {
           this.produk = data.data;
-
+          console.log(this.produk);
           this.pagination = data.pagination;
         } else {
           showFlash('Gagal memuat data produk', 'error');
@@ -52,6 +53,7 @@ function kelolaProdukPage() {
     },
 
     resetFilter() {
+      this.showFilter = false;
       this.filter.search = '';
       this.filter.sort = 'tanggal_dibuat';
       this.filter.dir = 'DESC';
@@ -67,8 +69,11 @@ function kelolaProdukPage() {
     nextPage() { this.goPage(this.pagination.page + 1); },
 
     async hapusProduk(id) {
-      if (!confirm("Yakin ingin menghapus produk ini?")) return;
       try {
+        if (this.submitting) return;
+        this.submitting = true;
+        if (!confirm("Yakin ingin menghapus produk ini?")) return;
+
         const res = await fetch(`${baseUrl}/api/produk?k=${id}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
@@ -80,6 +85,8 @@ function kelolaProdukPage() {
       } catch (err) {
         console.error('Hapus produk error:', err);
         showFlash('Terjadi kesalahan koneksi ke server', 'error');
+      } finally {
+        this.submitting = false;
       }
     },
   }

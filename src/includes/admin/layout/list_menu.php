@@ -1,4 +1,4 @@
-<nav class="flex-1 p-2 space-y-2">
+<nav class="flex-1 p-2 space-y-2 list-menu">
 
   <a :href="baseUrl + '/admin/dashboard'" class="btn btn-primary shadow-none gap-2 justify-start" :class="location.pathname.includes('/admin/dashboard') ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'" title="Dashboard">
     <span>

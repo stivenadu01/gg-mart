@@ -9,14 +9,17 @@
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
 
-  /* TOMBOL & LINK (Hapus scaling global) */
+  .list-menu a {
+    @apply w-full
+  }
+
   a,
   button {
     /* Tetapkan gaya dasar agar semua tombol terlihat seperti komponen */
     @apply transition-colors duration-200 inline-flex items-center justify-center font-medium text-sm;
   }
 
-  /* INPUT, TEXTAREA, SELECT (Hapus scaling, fokuskan pada fokus yang jelas) */
+
   input:not([type="checkbox"]):not([type="radio"]),
   textarea,
   select {
@@ -32,7 +35,7 @@
 @layer components {
 
   .btn {
-    @apply px-4 py-2.5 w-full rounded-lg shadow-md transition-all duration-300;
+    @apply px-4 py-2.5 rounded-lg shadow-md transition-all duration-300;
   }
 
   .btn-primary {

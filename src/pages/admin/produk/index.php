@@ -33,16 +33,16 @@ include INCLUDES_PATH . "/admin/layout/header.php";
   <!-- FILTER -->
   <div :class="showFilter ? 'block' : 'hidden md:block'"
     x-transition
-    class="bg-white rounded-xl shadow-md p-4 border border-gray-100">
+    class="bg-white rounded-xl shadow-md p-4 border border-gray-100 animate-fade">
 
-    <form @submit.prevent="applyFilter()" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+    <form @submit.prevent="applyFilter()" class="grid grid-cols-4 lg:grid-cols-8 gap-3 items-end">
 
       <!-- SEARCH -->
-      <div class="lg:col-span-3">
+      <div class="col-span-4 lg:col-span-3">
         <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Produk</label>
         <div class="relative">
-          <input type="text" id="filter_search" x-model.debounce.500ms="filter.search"
-            placeholder="Cari berdasarkan nama atau kode produk"
+          <input type="text" id="filter_search" x-model="filter.search"
+            placeholder="Cari produk..."
             class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
           <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
             xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -54,7 +54,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
       </div>
 
       <!-- SORT -->
-      <div class="sm:col-span-2">
+      <div class="col-span-2 lg:col-span-2">
         <label for="filter_sort" class="text-xs font-semibold text-gray-600 mb-1 block">Urutkan Berdasarkan</label>
         <select id="filter_sort" x-model="filter.sort"
           class="w-full form-select h-10 border border-gray-300 rounded-lg focus:border-gg-primary focus:ring-gg-primary text-sm">
@@ -66,7 +66,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
       </div>
 
       <!-- DIRECTION -->
-      <div class="sm:col-span-1">
+      <div class="col-span-2 lg:col-span-1">
         <label for="filter_dir" class="text-xs font-semibold text-gray-600 mb-1 block">Arah</label>
         <select id="filter_dir" x-model="filter.dir"
           class="w-full form-select h-10 border border-gray-300 rounded-lg focus:border-gg-primary focus:ring-gg-primary text-sm">
@@ -75,13 +75,32 @@ include INCLUDES_PATH . "/admin/layout/header.php";
         </select>
       </div>
 
-      <button type="submit" class="btn btn-primary h-10 px-4 w-full sm:col-span-1">Terapkan</button>
-      <button type="button" @click="resetFilter"
-        :disabled="!filter.search && filter.sort === 'tanggal_dibuat' && filter.dir === 'DESC'"
-        class="btn bg-gray-100 text-gray-700 h-10 px-4 w-full sm:col-span-1 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
-        Reset
-      </button>
+      <!-- BUTTONS -->
+      <div class="col-span-4 lg:col-span-2 flex gap-3 pt-2 lg:mt-0 border-gray-300 border-t lg:border-none">
+        <button type="submit"
+          class="btn btn-primary flex items-center justify-center gap-2 h-10 px-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Terapkan</span>
+        </button>
+
+        <button type="button"
+          @click="resetFilter"
+          :disabled="!filter.search && filter.sort === 'tanggal_dibuat' && filter.dir === 'DESC'"
+          class="btn btn-gray flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 12a9 9 0 11-9-9v3m0-3l-3 3m3-3l3 3" />
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
+
     </form>
+
   </div>
 
   <!-- LOADING -->

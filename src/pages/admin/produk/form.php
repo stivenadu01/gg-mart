@@ -7,7 +7,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
 ?>
 
 <div x-data="produkFormPage('<?= $act ?>', '<?= $id ?>')" x-init="initPage()"
-  class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6">
+  class="bg-gray-50 p-4 lg:p-6">
 
   <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl border border-gray-200 p-6 space-y-6">
 
@@ -28,7 +28,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
           <div>
             <label class="block mb-1 font-medium">Kategori</label>
             <select x-model="form.id_kategori" required
-              class="w-full border-gray-300 rounded-lg focus:ring-gg-primary focus:border-gg-primary p-2.5">
+              class="w-full rounded-lg focus:ring-gg-primary focus:border-gg-primary p-2.5">
               <option value="">-- Pilih Kategori --</option>
               <template x-for="k in kategori" :key="k.id_kategori">
                 <option :value="k.id_kategori" x-text="k.nama_kategori"></option>
@@ -49,43 +49,42 @@ include INCLUDES_PATH . "/admin/layout/header.php";
           </div>
 
           <div class="flex justify-end pt-4 border-t border-gray-200">
-            <button type="button" @click="nextPage()" class="btn btn-primary px-5 py-2 w-auto">Berikutnya</button>
+            <button type="button" @click="page++" class="btn btn-primary px-5 py-2 w-auto">Berikutnya</button>
           </div>
         </div>
       </template>
 
-      <!-- STEP 2: Stok yang Dipakai -->
-      <div class="space-y-4 animate-fade" :class="page === 2 ? 'block' : 'hidden'">
-        <h2 class="text-lg font-semibold text-gray-700">2️⃣ Stok yang Dipakai</h2>
-
-        <div>
-          <label class="block mb-1 font-medium">Pilih Item Stok</label>
-          <select x-model="form.id_item" @change="updateSatuan()" required
-            class="w-full border-gray-300 rounded-lg focus:ring-gg-primary focus:border-gg-primary p-2.5">
-            <option value="">-- Pilih Item --</option>
-            <template x-for="i in items" :key="i.id_item">
-              <option :value="i.id_item" x-text="i.nama_item"></option>
-            </template>
-          </select>
-        </div>
-
-        <div>
-          <label class="block mb-1 font-medium">Jumlah Satuan <span x-text="`(${satuan_dasar})`"></span></label>
-          <input type="number" x-model="form.jumlah_satuan" min="1" placeholder="" required
-            class="w-full rounded-lg focus:ring-gg-primary focus:border-gg-primary p-2.5">
-          <p class="text-xs text-gray-500">Jumlah stok dalam <span x-text="satuan_dasar"></span> yang digunakan untuk menjual produk ini</p>
-        </div>
-
-        <div class="flex justify-between pt-4 border-t border-gray-200">
-          <button type="button" @click="page = 1" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 px-4">Kembali</button>
-          <button type="button" @click="nextPage()" class="btn btn-primary px-4">Berikutnya</button>
-        </div>
-      </div>
-
-      <!-- STEP 3: Detail Produk -->
-      <template x-if="page === 3">
+      <!-- STEP 2: Detail Produk -->
+      <template x-if="page === 2">
         <div class="space-y-4 animate-fade">
-          <h2 class="text-lg font-semibold text-gray-700">3️⃣ Detail Produk</h2>
+          <h2 class="text-lg font-semibold text-gray-700">2️⃣ Detail Produk</h2>
+          <div>
+            <label for="satuan_dasar">Pilih Satuan Dasar</label>
+            <select x-model="form.satuan_dasar" id="satuan_dasar" class="rounded p-2 w-full">
+              <option value="">--- Pilih Satuan Dasar ---</option>
+              <option value="pcs">Pcs (Satuan)</option>
+              <option value="buah">Buah</option>
+              <option value="unit">Unit</option>
+              <option value="pack">Pack</option>
+              <option value="lusin">Lusin</option>
+              <option value="bungkus">Bungkus</option>
+              <option value="kotak">Kotak</option>
+              <option value="cup">Cup</option>
+              <option value="porsi">Porsi</option>
+              <option value="botol">Botol</option>
+              <option value="kaleng">Kaleng</option>
+              <option value="liter">Liter</option>
+              <option value="ml">Mililiter (ml)</option>
+              <option value="kg">Kilogram (Kg)</option>
+              <option value="gram">Gram</option>
+              <option value="ons">Ons (100gr)</option>
+              <option value="galon">Galon</option>
+              <option value="lembar">Lembar</option>
+              <option value="set">Set</option>
+              <option value="box">Box</option>
+              <option value="sachet">Sachet</option>
+            </select>
+          </div>
 
           <div>
             <label class="block mb-1 font-medium">Deskripsi</label>
@@ -101,11 +100,12 @@ include INCLUDES_PATH . "/admin/layout/header.php";
             <template x-if="preview">
               <img :src="preview" alt="Preview Gambar" class="mt-3 w-40 h-40 object-cover rounded-lg shadow">
             </template>
+            <span class="text-red-500/90 text-xs">* Pastikan gambar telah dikompres agar menghemat penyimpanan</span>
           </div>
 
-          <div class="flex justify-between pt-4 border-t border-gray-200">
-            <button type="button" @click="page = 2" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 px-4">Kembali</button>
-            <button type="submit" class="btn btn-primary px-4" x-text="isEdit ? 'Simpan Perubahan' : 'Simpan Produk'"></button>
+          <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 w-auto">
+            <button type="button" @click="page = 1" class="btn btn-gray">Kembali</button>
+            <?php include INCLUDES_PATH . 'btn_submit.php' ?>
           </div>
         </div>
       </template>

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS produk (
     nama_produk VARCHAR(150) NOT NULL,
     deskripsi TEXT,
     harga_jual DECIMAL(12, 2) NOT NULL,
+    satuan_dasar CHAR(10),
     stok INT DEFAULT 0,
     terjual INT DEFAULT 0,
     gambar VARCHAR(255),

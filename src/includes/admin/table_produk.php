@@ -6,7 +6,6 @@
         <thead class="sticky top-0 z-10 bg-gray-100">
           <tr>
             <th class="p-3 text-left w-[280px]">Produk</th>
-            <th class="p-3 text-left">Stok Dasar</th>
             <th class="p-3 text-left">Harga Jual</th>
             <th class="p-3 text-center">Stok & Terjual</th>
             <th class="p-3 text-left">Deskripsi</th>
@@ -24,21 +23,11 @@
                     :src="p.gambar ? `${uploadsUrl}/${p.gambar}` : `${assetsUrl}/img/no-image.webp`"
                     alt="gambar produk"
                     class="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm flex-shrink-0" />
-                  <div class="flex flex-col gap-1">
-                    <span class="font-semibold text-gray-800 text-sm md:text-base line-clamp-1" x-text="p.nama_produk"></span>
-                    <span class="text-xs text-gray-500" x-text="`Kode: ${p.kode_produk}`"></span>
-                    <span class="text-xs text-gray-600" x-text="p.nama_kategori || 'Tanpa Kategori'"></span>
+                  <div class="flex flex-col gap-1 font-semibold">
+                    <span class="text-gray-800 text-sm md:text-base line-clamp-1" x-text="p.nama_produk"></span>
+                    <span class="text-xs text-red-400" x-text="`Kode: ${p.kode_produk}`"></span>
+                    <span class="text-xs text-gg-primary/80" x-text="'Kategori: ' + p.nama_kategori || 'Tanpa Kategori'"></span>
                   </div>
-                </div>
-              </td>
-
-              <!-- STOK DASAR -->
-              <td class="p-3">
-                <div class="flex flex-col leading-tight">
-                  <span class="text-sm font-medium text-gray-800"
-                    x-text="` ${p.item_stok}`"></span>
-                  <span class="text-xs text-gray-500 italic"
-                    x-text="`Memakai ${p.jumlah_satuan} ${p.satuan_dasar}`"></span>
                 </div>
               </td>
 
@@ -47,17 +36,19 @@
 
               <!-- STOK & TERJUAL -->
               <td class="p-3 text-center">
-                <div class="flex justify-center items-center gap-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-semibold text-white"
+                <div class="flex flex-col justify-center items-center gap-1">
+                  <span class="px-2 py-1 rounded-md text-xs font-semibold text-white"
                     :class="p.stok <= 5 ? 'bg-red-500' : 'bg-gg-primary'"
                     x-text="`Tersedia: ${p.stok} ${p.satuan_dasar}`"></span>
-                  <span class="px-2 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white"
+                  <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-500 text-white"
                     x-text="`Terjual: ${p.terjual} ${p.satuan_dasar}`"></span>
                 </div>
               </td>
 
               <!-- DESKRIPSI -->
-              <td class="p-3 text-gray-600 text-sm break-words max-w-[240px]" x-text="p.deskripsi || '-'"></td>
+              <td class="p-3 text-gray-600 text-sm w-auto max-w-[240px] align-top">
+                <span class="block line-clamp-2 break-words" x-text="p.deskripsi || '-'"></span>
+              </td>
 
               <!-- AKSI -->
               <td class="p-3 text-center">
@@ -75,7 +66,8 @@
 
                   <button @click="hapusProduk(p.kode_produk)"
                     class="text-red-600 hover:text-red-800 transition p-1 rounded-full"
-                    title="Hapus Produk">
+                    title="Hapus Produk"
+                    :disabled="submitting">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                       viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round"

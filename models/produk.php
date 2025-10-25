@@ -74,18 +74,18 @@ function getProdukList($page = 1, $limit = 10, $search = '', $order_by = 'tangga
 function tambahProduk($data)
 {
   global $conn;
-  $sql = "INSERT INTO produk (kode_produk, id_kategori, nama_produk, deskripsi, harga_jual, stok, gambar)
-          VALUES (?, ?, ?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO produk (kode_produk, id_kategori, nama_produk, deskripsi, harga_jual, stok, gambar, satuan_dasar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
-    "sissdis",
+    "sissdiss",
     $data['kode_produk'],
     $data['id_kategori'],
     $data['nama_produk'],
     $data['deskripsi'],
     $data['harga_jual'],
     $data['stok'],
-    $data['gambar']
+    $data['gambar'],
+    $data['satuan_dasar']
   );
   $res = $stmt->execute();
   $stmt->close();
@@ -95,7 +95,7 @@ function tambahProduk($data)
 function editProduk($kode, $data)
 {
   global $conn;
-  $allowed = ['nama_produk', 'id_kategori', 'deskripsi', 'harga_jual', 'stok', 'terjual', 'gambar'];
+  $allowed = ['nama_produk', 'id_kategori', 'deskripsi', 'harga_jual', 'stok', 'terjual', 'gambar', 'satuan_dasar'];
   $set = [];
   $params = [];
   $types = '';
