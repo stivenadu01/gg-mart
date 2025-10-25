@@ -3,7 +3,7 @@ $pageTitle = "Kelola Produk";
 include INCLUDES_PATH . "/admin/layout/header.php";
 ?>
 
-<div x-data="kelolaProdukPage()" x-init="fetchProduk()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-4">
+<div x-data="kelolaProdukPage()" x-init="fetchProduk()" class="bg-gray-50 p-4 lg:p-6 space-y-4">
 
   <!-- HEADER -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -14,7 +14,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
 
     <div class="flex items-center gap-3">
       <button @click="showFilter = !showFilter"
-        class="md:hidden btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2.5 w-auto flex items-center gap-1 rounded-lg">
+        class="md:hidden btnbtn-gray w-auto flex items-center gap-1 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round"

@@ -11,9 +11,10 @@ $status = 200;
 switch ($method) {
   case 'GET':
     try {
-      // Mode: all (tanpa pagination)
-      if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
-        $data = getAllProduk();
+      // Mode: dropdown (tanpa pagination)
+      if (isset($_GET['mode']) && $_GET['mode'] === 'dropdown') {
+        $search = trim($_GET['search'] ?? '');
+        $data = getDropdownProduk($search);
         $res = ['success' => true, 'data' => $data];
         break;
       }

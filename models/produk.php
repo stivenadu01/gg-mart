@@ -11,10 +11,18 @@ function findProduk($kode)
   return $result;
 }
 
-function getAllProduk()
+function getDropdownProduk($search)
 {
   global $conn;
-  $sql = "SELECT kode_produk, nama_produk FROM produk ORDER BY nama_produk ASC";
+  $search = $conn->real_escape_string($search);
+  $sql = "
+    SELECT kode_produk, nama_produk, satuan_dasar
+    FROM produk 
+    WHERE nama_produk LIKE '%$search%' 
+       OR kode_produk LIKE '%$search%' 
+    ORDER BY nama_produk ASC 
+    LIMIT 10
+  ";
   $res = $conn->query($sql);
   $produk = [];
   while ($row = $res->fetch_assoc()) {
@@ -22,6 +30,7 @@ function getAllProduk()
   }
   return $produk;
 }
+
 
 function getProdukList($page = 1, $limit = 10, $search = '', $order_by = 'tanggal_dibuat', $order_dir = 'DESC')
 {
@@ -129,4 +138,13 @@ function hapusProduk($kode)
   $res = $stmt->execute();
   $stmt->close();
   return $res;
+}
+
+// tambahan
+function updateStokProduk($kode)
+{
+  global $conn;
+  $stok = $conn->query("SELECT SUM(sisa_stok) as total FROM mutasi_stok where kode_produk='$kode' AND type='masuk'")->fetch_assoc()['total'];
+
+  return $conn->query("UPDATE produk SET stok = '$stok' WHERE kode_produk='$kode'");
 }

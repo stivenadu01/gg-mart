@@ -3,18 +3,18 @@ $pageTitle = "Kelola Stok";
 include INCLUDES_PATH . "/admin/layout/header.php";
 ?>
 
-<div x-data="kelolaStokPage()" x-init="fetchMutasiStok()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-4">
+<div x-data="kelolaStokPage()" x-init="fetchMutasiStok()" class="bg-gray-50 p-4 lg:p-6 space-y-4">
 
   <!-- HEADER -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Kelola Perubahan Stok Produk</h1>
-      <p class="text-sm text-gray-500">Pantau dan kelola perubahan stok produk GGMart dari sini.</p>
+      <p class="text-sm text-gray-500">Pantau dan kelola perubahan stok produk GG MART dari sini.</p>
     </div>
 
     <div class="flex items-center gap-3">
       <button @click="showFilter = !showFilter"
-        class="md:hidden btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2.5 w-auto flex items-center gap-1 rounded-lg">
+        class="md:hidden btn btn-gray w-auto flex items-center gap-1 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round"
@@ -25,7 +25,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
 
       <a :href="baseUrl + '/admin/stok/form'"
         class="btn btn-accent px-5 py-2.5 w-auto rounded-lg font-semibold">
-        + <span class="hidden sm:inline">Tambah perubahan stok</span>
+        + <span class="hidden sm:inline ml-1">Tambah perubahan stok</span>
       </a>
     </div>
   </div>
@@ -33,15 +33,15 @@ include INCLUDES_PATH . "/admin/layout/header.php";
   <!-- FILTER -->
   <div :class="showFilter ? 'block' : 'hidden md:block'"
     x-transition
-    class="bg-white rounded-xl shadow-md p-4 border border-gray-100">
+    class="bg-white rounded-xl shadow-md p-4 border border-gray-100 animate-fade">
 
     <form @submit.prevent="applyFilter()" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
 
       <div class="lg:col-span-3">
-        <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Item</label>
+        <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Produk</label>
         <div class="relative">
-          <input type="text" id="filter_search" x-model.debounce.500ms="filter.search"
-            placeholder="Cari Item"
+          <input type="text" id="filter_search" x-model="filter.search"
+            placeholder="Cari Produk"
             class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
           <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
             xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -62,13 +62,29 @@ include INCLUDES_PATH . "/admin/layout/header.php";
         </select>
       </div>
 
-      <button type="submit" class="btn btn-primary h-10 px-4 w-full sm:col-span-1">Terapkan</button>
+      <!-- BUTTONS -->
+      <div class="col-span-4 lg:col-span-2 flex gap-3 pt-2 lg:mt-0 border-gray-300 border-t lg:border-none">
+        <button type="submit"
+          class="btn btn-primary flex items-center justify-center gap-2 h-10 px-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Terapkan</span>
+        </button>
 
-      <button type="button" @click="resetFilter"
-        :disabled="!filter.type && !filter.search"
-        class="btn bg-gray-100 text-gray-700 h-10 px-4 w-full sm:col-span-1 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
-        Reset
-      </button>
+        <button type="button"
+          @click="resetFilter"
+          :disabled="!filter.search && filter.type === ''"
+          class="btn btn-gray flex items-center justify-center gap-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 12a9 9 0 11-9-9v3m0-3l-3 3m3-3l3 3" />
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
     </form>
   </div>
 

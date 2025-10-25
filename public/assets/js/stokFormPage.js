@@ -1,79 +1,117 @@
-function stokFormPage() {
-  return {
-    items: [],
-    mutasiList: [],
-    satuan_dasar: "",
-    nama_item: "",
-    form: {
-      id_item: "",
-      type: "",
-      jumlah: 0,
-      total_pokok: 0,
-      harga_pokok: 0,
-      id_mutasi: "",
-      keterangan: ""
-    },
-    page: 1,
+const stokFormPage = () => ({
+  produkList: {
+    query: '',
+    data: [],
+    satuan_dasar: '',
+    open: false,
+    loading: false,
 
-    async fetchItems() {
-      const res = await fetch(`${baseUrl}/api/itemStok?mode=all`);
-      const data = await res.json();
-      if (data.success) this.items = data.data;
-    },
-
-    updateSatuan() {
-      const item = this.items.find(i => i.id_item == this.form.id_item);
-      this.satuan_dasar = item ? item.satuan_dasar : "";
-      this.nama_item = item ? item.nama_item : "";
-    },
-
-    async fetchMutasi() {
-      this.updateSatuan();
-      if (this.form.type !== "keluar" || !this.form.id_item) {
-        this.mutasiList = [];
-        return;
-      }
-      const res = await fetch(`${baseUrl}/api/mutasiStok?mode=list_mutasi_item&id_item=${this.form.id_item}`);
-      const data = await res.json();
-      if (data.success) this.mutasiList = data.data;
-    },
-
-    syncHargaPokok(source) {
-      const j = parseFloat(this.form.jumlah) || 0;
-      if (j <= 0) return;
-      if (source === 'total') {
-        this.form.harga_pokok = this.form.total_pokok / j;
-      } else if (source === 'harga') {
-        this.form.total_pokok = this.form.harga_pokok * j;
+    async fetch() {
+      this.loading = true;
+      try {
+        const res = await fetch(`${baseUrl}/api/produk?mode=dropdown&search=${encodeURIComponent(this.query)}`);
+        const result = await res.json();
+        this.data = result.success ? result.data : [];
+      } catch (err) {
+        console.error('Fetch produk gagal:', err);
+        this.data = [];
+        this.open = false;
+      } finally {
+        this.loading = false;
       }
     },
+  },
 
-    async submitForm() {
+  selectProdukList(p) {
+    this.produkList.open = false;
+    this.produkList.query = p.nama_produk;
+    this.form.kode_produk = p.kode_produk;
+    this.form.nama_produk = p.nama_produk;
+    this.produkList.satuan_dasar = p.satuan_dasar;
+  },
+
+  mutasiList: {
+    query: '',
+    data: [],
+    open: false,
+    filtered: [],
+    change() {
+      this.filtered = this.data.filter(i => (
+        formatDateTime(i.tanggal).toLowerCase().includes(this.query.toLowerCase())
+      ))
+    }
+  },
+
+  form: {
+    kode_produk: "",
+    nama_produk: "",
+    type: "",
+    jumlah: 0,
+    total_pokok: 0,
+    harga_pokok: 0,
+    id_mutasi: "",
+    keterangan: ""
+  },
+  page: 1,
+  submitting: false,
+
+  async fetchMutasiList() {
+    try {
+      const res = await fetch(`${baseUrl}/api/mutasiStok?mode=dropdown&kode=${this.form.kode_produk}`);
+      const data = await res.json();
+      if (data.success) {
+        this.mutasiList.data = data.data;
+        this.mutasiList.filtered = data.data;
+      };
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  selectMutasiList(m) {
+    this.mutasiList.open = false;
+    this.mutasiList.query = formatDateTime(m.tanggal);
+    this.form.id_mutasi = m.id_mutasi;
+    this.form.harga_pokok = m.harga_pokok;
+  },
+
+
+  syncHargaPokok(source) {
+    const j = parseFloat(this.form.jumlah) || 0;
+    if (j <= 0) return;
+    if (source === 'total') {
+      this.form.harga_pokok = this.form.total_pokok / j;
+    } else if (source === 'harga') {
+      this.form.total_pokok = this.form.harga_pokok * j;
+    }
+  },
+
+  async submitForm() {
+    try {
+      this.submitting = true;
       const formData = new FormData();
       for (let key in this.form) formData.append(key, this.form[key]);
+      formData.append('sisa_stok', this.form.jumlah);
 
       const res = await fetch(`${baseUrl}/api/mutasiStok`, { method: "POST", body: formData });
       const data = await res.json();
 
       if (data.success) {
         showFlash(data.message);
-        setTimeout(() => {
-          window.location.href = `${baseUrl}/admin/stok`;
-        }, 1000);
+        setTimeout(() => window.location.href = `${baseUrl}/admin/stok`, 1000);
       } else {
         showFlash(data.message || "Gagal menyimpan stok", "error");
       }
-    },
-
-    nextPage() {
-      if (this.page === 1 && !this.form.type) return showFlash("Pilih jenis perubahan dulu", "error");
-      if (this.page === 2 && !this.form.id_item) return showFlash("Pilih item dulu", "error");
-      this.page++;
-    },
-
-    formatDate(tanggal) {
-      const d = new Date(tanggal);
-      return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.submitting = false;
     }
-  };
-}
+  },
+
+  nextPage() {
+    if (this.page === 1 && !this.form.type || !this.form.kode_produk) return showFlash("Pilih Jenis Perubahan & Produk Dulu", "warning");
+    if (this.form.type == 'keluar') this.fetchMutasiList();
+    this.page++;
+  }
+});

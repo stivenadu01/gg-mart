@@ -19,7 +19,7 @@ function getMutasiStokList($page = 1, $limit = 10, $type = '', $search = '')
 
   if ($search !== '') {
     $safe = "%" . $conn->real_escape_string($search) . "%";
-    $where[] = "(ms.nama_produk LIKE '$safe' OR ms.kode_produk LIKE '$safe' OR ms.keterangan LIKE '$safe')";
+    $where[] = "(ms.nama_produk LIKE '$safe')";
   }
 
   if ($type !== '') {
@@ -32,7 +32,7 @@ function getMutasiStokList($page = 1, $limit = 10, $type = '', $search = '')
   $total = $conn->query("SELECT COUNT(*) AS total FROM mutasi_stok ms $whereClause")->fetch_assoc()['total'];
 
   $sql = "
-    SELECT ms.*, p.nama_produk
+    SELECT ms.*, p.satuan_dasar
     FROM mutasi_stok ms
     LEFT JOIN produk p ON ms.kode_produk = p.kode_produk
     $whereClause
@@ -53,7 +53,7 @@ function tambahMutasiStok($data)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
-    "sssiddsi",
+    "sssidsdi",
     $data['kode_produk'],
     $data['nama_produk'],
     $data['type'],
@@ -76,4 +76,27 @@ function hapusMutasiStok($id)
   $res = $stmt->execute();
   $stmt->close();
   return $res;
+}
+
+
+// tambahan
+function getMutasiByProduk($kode)
+{
+  global $conn;
+  $stmt = $conn->prepare("SELECT * FROM mutasi_stok WHERE kode_produk=? AND sisa_stok > 0 AND type='masuk' ORDER BY tanggal DESC");
+  $stmt->bind_param('s', $kode);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $data = [];
+  while ($row = $res->fetch_assoc()) {
+    $data[] = $row;
+  }
+  $stmt->close();
+  return $data;
+}
+
+function ubahSisaStokMutasi($id, $stok_baru)
+{
+  global $conn;
+  return $conn->query("UPDATE mutasi_stok SET sisa_stok='$stok_baru' WHERE id_mutasi='$id'");
 }

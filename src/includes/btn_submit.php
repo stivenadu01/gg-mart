@@ -2,7 +2,7 @@
   class="btn btn-primary flex items-center gap-2"
   :disabled="submitting">
   <template x-if="!submitting">
-    <span x-text="isEdit ? 'Simpan Perubahan' : 'Simpan Produk'"></span>
+    <span>Simpan</span>
   </template>
   <template x-if="submitting">
     <span class="flex items-center gap-2">

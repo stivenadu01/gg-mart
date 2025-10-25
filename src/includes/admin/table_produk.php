@@ -3,13 +3,13 @@
   <div class="space-y-3">
     <div class="overflow-auto max-h-[80dvh] custom-scrollbar bg-white rounded-xl shadow-lg border border-gray-100">
       <table class="app-table min-w-full text-sm text-gray-700">
-        <thead class="sticky top-0 z-10 bg-gray-100">
+        <thead class="sticky top-0 bg-gray-100">
           <tr>
-            <th class="p-3 text-left w-[280px]">Produk</th>
-            <th class="p-3 text-left">Harga Jual</th>
-            <th class="p-3 text-center">Stok & Terjual</th>
-            <th class="p-3 text-left">Deskripsi</th>
-            <th class="p-3 text-center">Aksi</th>
+            <th class="text-left w-[280px]">Produk</th>
+            <th class="text-left">Harga Jual</th>
+            <th class="text-center">Stok & Terjual</th>
+            <th class="text-left hidden md:block">Deskripsi</th>
+            <th class="text-center">Aksi</th>
           </tr>
         </thead>
 
@@ -25,33 +25,37 @@
                     class="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm flex-shrink-0" />
                   <div class="flex flex-col gap-1 font-semibold">
                     <span class="text-gray-800 text-sm md:text-base line-clamp-1" x-text="p.nama_produk"></span>
-                    <span class="text-xs text-red-400" x-text="`Kode: ${p.kode_produk}`"></span>
-                    <span class="text-xs text-gg-primary/80" x-text="'Kategori: ' + p.nama_kategori || 'Tanpa Kategori'"></span>
+                    <span class="text-xs text-gray-400" x-text="`Kode: ${p.kode_produk}`"></span>
+                    <span class="text-xs text-gray-500" x-text="'Kategori: ' + p.nama_kategori || 'Tanpa Kategori'"></span>
                   </div>
                 </div>
               </td>
 
               <!-- HARGA -->
-              <td class="p-3 font-semibold text-gray-800 whitespace-nowrap" x-text="formatRupiah(p.harga_jual)"></td>
+              <td class="font-semibold text-gray-800 whitespace-nowrap" x-text="formatRupiah(p.harga_jual)"></td>
 
               <!-- STOK & TERJUAL -->
-              <td class="p-3 text-center">
-                <div class="flex flex-col justify-center items-center gap-1">
-                  <span class="px-2 py-1 rounded-md text-xs font-semibold text-white"
-                    :class="p.stok <= 5 ? 'bg-red-500' : 'bg-gg-primary'"
+              <td class="text-center">
+                <div class="flex flex-col justify-center items-center gap-y-2">
+                  <span class="w-full px-1 py-0.5 rounded-md text-xs font-semibold border"
+                    :class="p.stok <= 5 ? 'bg-red-500/15 border-red-500 text-red-500' : 'bg-gg-primary/15 border-gg-primary text-gg-primary'"
                     x-text="`Tersedia: ${p.stok} ${p.satuan_dasar}`"></span>
-                  <span class="px-2 py-1 rounded-md text-xs font-semibold bg-blue-500 text-white"
+                  <span class="w-full px-1 py-0.5 rounded-md text-xs font-semibold bg-blue-500/15 text-blue-500 border border-blue-500"
                     x-text="`Terjual: ${p.terjual} ${p.satuan_dasar}`"></span>
                 </div>
               </td>
 
               <!-- DESKRIPSI -->
-              <td class="p-3 text-gray-600 text-sm w-auto max-w-[240px] align-top">
-                <span class="block line-clamp-2 break-words" x-text="p.deskripsi || '-'"></span>
+              <td class="text-gray-600 text-sm max-w-72 md:block hidden align-top">
+                <span
+                  class="block whitespace-normal"
+                  x-text="(p.deskripsi?.length > 150) ? p.deskripsi.substring(0, 150) + '…' : (p.deskripsi || '-')"></span>
               </td>
 
+
+
               <!-- AKSI -->
-              <td class="p-3 text-center">
+              <td class="text-center">
                 <div class="flex justify-center items-center gap-2">
                   <a :href="`${baseUrl}/admin/produk/form?id=${p.kode_produk}&act=edit`"
                     class="text-blue-600 hover:text-blue-800 transition p-1 rounded-full"
@@ -86,7 +90,7 @@
 
     <!-- PAGINATION -->
     <template x-if="!loading && produk.length > 0">
-      <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-gray-100 gap-3 bg-gray-50 rounded-b-xl">
+      <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-gray-100 gabg-gray-50 rounded-b-xl">
         <p class="text-sm text-gray-500" x-text="`Menampilkan ${produk.length} dari ${pagination.total} data`"></p>
         <div class="flex flex-wrap gap-2">
           <button @click="prevPage" :disabled="pagination.page === 1"
