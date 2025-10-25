@@ -2,15 +2,15 @@
 models('Kategori');
 require_once ROOT_PATH . '/config/api_init.php';
 
-$id_kategori = $_GET['k'] ?? null;
+$id_kategori = $_GET['id'] ?? null;
 $res = [];
 $status = 200;
 
 switch ($method) {
-  // GET /api/kategori[?k=id]
+  // GET /api/kategori[?id=]
   case 'GET':
     try {
-      // Mode: semua kategori (tanpa pagination)
+      // Mode: semua kategori (tanpa pagination, untuk dropdown)
       if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
         $data = getAllKategori();
         $res = ['success' => true, 'data' => $data];

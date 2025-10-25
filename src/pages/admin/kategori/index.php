@@ -7,7 +7,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Kelola Kategori</h1>
-      <p class="text-sm text-gray-500">Pantau dan kelola seluruh kategori GG-Mart dari sini.</p>
+      <p class="text-sm text-gray-500">Pantau dan kelola seluruh kategori GG MART dari sini.</p>
     </div>
 
     <div class="flex items-center gap-3">
@@ -21,7 +21,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
       <a :href="baseUrl + '/admin/kategori/form?act=tambah'"
         class="btn btn-accent w-auto py-1.5">
         <span class="text-lg">+</span>
-        <span class="hidden md:inline">Tambah</span>
+        <span class="hidden md:inline">Tambah Kategori</span>
       </a>
     </div>
   </div>
@@ -34,7 +34,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
   <template x-if="!loading && kategori.length === 0">
     <div class="bg-white rounded-xl shadow-lg p-12 text-center border-2 border-dashed border-gray-300">
       <h3 class="text-xl font-semibold text-gray-500">Tidak ada kategori</h3>
-      <p class="text-sm text-gray-500 mb-4">Tambahkan kategori baru untuk mulai mengelola produk.</p>
+      <p class="text-sm text-gray-500 mb-4">Tambahkan kategori baru untuk mulai mengelompokan produk.</p>
       <a :href=" baseUrl + '/admin/kategori/form?act=tambah'"
         class="btn btn-primary px-6 py-2.5 w-auto">Tambah Kategori</a>
     </div>
