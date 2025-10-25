@@ -1,72 +1,86 @@
 function kelolaProdukPage() {
   return {
     produk: [],
+    showFilter: false,
+    filter: {
+      search: '',
+      sort: 'tanggal_dibuat',
+      dir: 'DESC',
+    },
     pagination: {
       page: 1,
+      limit: 10,
       total: 0,
-      total_pages: 1,
-      limit: 10
+      total_pages: 1
     },
-    search: "",
     loading: false,
 
     async fetchProduk(page = 1) {
       this.loading = true;
-      const urlApi = `${baseUrl}/api/produk?halaman=${page}&limit=${this.pagination.limit}&search=${encodeURIComponent(this.search)}`;
+      this.pagination.page = page;
+
+      const params = new URLSearchParams({
+        halaman: page,
+        limit: this.pagination.limit,
+        search: this.filter.search,
+        sort: this.filter.sort,
+        dir: this.filter.dir,
+      });
 
       try {
-        const res = await fetch(urlApi);
+        const res = await fetch(`${baseUrl}/api/produk?${params}`);
         const data = await res.json();
+
         if (data.success) {
           this.produk = data.data;
+
           this.pagination = data.pagination;
         } else {
-          console.error("API error:", data.message);
+          showFlash('Gagal memuat data produk', 'error');
         }
-      } catch (e) {
-        console.error("FetchProduk error:", e);
+      } catch (err) {
+        console.error('Fetch produk error:', err);
+        showFlash('Terjadi kesalahan koneksi ke server', 'error');
       } finally {
         this.loading = false;
       }
     },
 
-    doSearch() {
-      this.pagination.page = 1;
-      this.fetchProduk();
+    applyFilter() {
+      this.showFilter = false;
+      this.fetchProduk(1);
     },
 
-    nextPage() {
-      if (this.pagination.page < this.pagination.total_pages) {
-        this.pagination.page++;
-        this.fetchProduk(this.pagination.page);
+    resetFilter() {
+      this.filter.search = '';
+      this.filter.sort = 'tanggal_dibuat';
+      this.filter.dir = 'DESC';
+      this.fetchProduk(1);
+    },
+
+    goPage(page) {
+      if (page >= 1 && page <= this.pagination.total_pages && page !== this.pagination.page) {
+        this.fetchProduk(page);
       }
     },
+    prevPage() { this.goPage(this.pagination.page - 1); },
+    nextPage() { this.goPage(this.pagination.page + 1); },
 
-    prevPage() {
-      if (this.pagination.page > 1) {
-        this.pagination.page--;
-        this.fetchProduk(this.pagination.page);
+    async hapusProduk(id) {
+      if (!confirm("Yakin ingin menghapus produk ini?")) return;
+      try {
+        const res = await fetch(`${baseUrl}/api/produk?k=${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showFlash(data.message);
+          this.fetchProduk(this.pagination.page);
+        } else {
+          showFlash(data.message, 'error');
+        }
+      } catch (err) {
+        console.error('Hapus produk error:', err);
+        showFlash('Terjadi kesalahan koneksi ke server', 'error');
       }
     },
-
-    goPage(n) {
-      this.pagination.page = n;
-      this.fetchProduk(n);
-    },
-
-    async hapusProduk(kode) {
-      let ok = await confirm("Yakin ingin menghapus produk ini?");
-      if (await !ok) return;
-      let res = await fetch(`${baseUrl}/api/produk?k=${kode}`, {
-        method: "DELETE"
-      })
-      res = await res.json();
-      if (res.success) {
-        this.produk = this.produk.filter(p => p.kode_produk !== kode);
-        showFlash("✅ Produk berhasil dihapus!");
-      } else {
-        showFlash("❌ Gagal menghapus produk: " + d.message);
-      }
-    }
-  };
+  }
 }

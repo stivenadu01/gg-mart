@@ -4,11 +4,13 @@
   const uploadsUrl = <?= json_encode(UPLOADS_URL) ?>;
 
   const currentUser = <?= json_encode($_SESSION['user'] ?? null) ?>;
-  const isAdmin = <?= json_encode(is_admin()) ?>;
+  const isKasir = <?= json_encode(is_kasir()) ?>;
+  const isManager = <?= json_encode(is_manager()) ?>;
+  const isSuperAdmin = <?= json_encode(is_super_admin()) ?>;
 
-  function formatRupiah(angka) {
+  function formatRupiah(angka, prefix = true) {
     angka = new Intl.NumberFormat('id-ID').format(angka);
-    return 'Rp' + angka;
+    return prefix ? 'Rp' + angka : angka;
   }
 
   function formatDate(dateStr) {

@@ -29,8 +29,8 @@ module.exports = {
     extend: {
       colors: {
         gg: {
-          primary: '#2E7D32',     // warna utama brand (misalnya hijau tua)
-          secondary: '#81C784',   // warna aksen / hover
+          primary: 'rgb(16 185 129)',// warna utama brand (misalnya hijau tua)
+          secondary: '#4CAF50',   // warna aksen / hover
           accent: '#F77F00',      // warna sorotan / promo / alert
           neutral: '#1D1D1D',     // warna teks utama / navbar
           base: '#FFFFFF',        // warna dasar (white / surface)

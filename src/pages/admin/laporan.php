@@ -3,45 +3,49 @@ $pageTitle = "Laporan Penjualan";
 include INCLUDES_PATH . "admin/layout/header.php";
 ?>
 
-<div x-data="laporanPage()" class="bg-gray-50 p-3 md:p-6 space-y-6">
+<div x-data="laporanPage()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-4">
   <div>
-    <h1 class="text-2xl font-bold text-neutral-800">Laporan Penjualan</h1>
+    <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Laporan Penjualan</h1>
     <p class="text-sm text-gray-500">Cetak laporan penjualan harian, bulanan, atau tahunan.</p>
   </div>
 
-  <!-- PILIH JENIS LAPORAN -->
-  <div class="bg-white p-3 md:p-5 rounded-xl shadow space-y-4">
-    <h2 class="text-lg font-semibold text-gray-800">Pilih Jenis Laporan</h2>
+  <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-5 max-w-lg">
+    <h2 class="text-xl font-bold text-gray-800 border-b pb-3 border-gray-200">Pilih Parameter Laporan</h2>
 
-    <div class="flex flex-col md:flex-row gap-4 items-center">
-      <select x-model="tipe" class="border-gray-300 rounded-md px-3 py-2">
-        <option value="harian">Harian</option>
-        <option value="bulanan">Bulanan</option>
-        <option value="tahunan">Tahunan</option>
-      </select>
+    <div class="flex flex-col md:flex-row gap-4 items-end">
+      <div>
+        <label class="text-sm font-medium text-gray-700 block mb-1">Jenis Laporan</label>
+        <select x-model="tipe" class="w-full">
+          <option value="harian">Harian</option>
+          <option value="bulanan">Bulanan</option>
+          <option value="tahunan">Tahunan</option>
+        </select>
+      </div>
 
-      <!-- Input sesuai tipe -->
-      <template x-if="tipe === 'harian'">
-        <input type="date" x-model="tanggal" class="border-gray-300 rounded-md px-3 py-2" />
-      </template>
+      <div class="flex-1">
+        <label class="text-sm font-medium text-gray-700 block mb-1">Pilih Periode</label>
+        <template x-if="tipe === 'harian'">
+          <input type="date" x-model="tanggal" class="w-full" />
+        </template>
 
-      <template x-if="tipe === 'bulanan'">
-        <input type="month" x-model="bulan" class="border-gray-300 rounded-md px-3 py-2" />
-      </template>
+        <template x-if="tipe === 'bulanan'">
+          <input type="month" x-model="bulan" class="w-full" />
+        </template>
 
-      <template x-if="tipe === 'tahunan'">
-        <input type="number" x-model="tahun" min="2025" class="border-gray-300 rounded-md px-3 py-2 w-32" />
-      </template>
+        <template x-if="tipe === 'tahunan'">
+          <input type="number" x-model="tahun" min="2020" max="2100" class="w-full" placeholder="Tahun" />
+        </template>
+      </div>
     </div>
 
     <button @click="cetakLaporan"
-      class="bg-red-500 hover:opacity-80 text-white px-5 py-2 rounded-lg shadow transition" title="Cetak Laporan PDF">
-      Cetak PDF
+      class="btn px-5 py-2 w-auto bg-red-600 hover:bg-red-700 text-white shadow-md transition" title="Cetak Laporan PDF">
+      <i class="fas fa-file-pdf mr-2"></i> Cetak PDF
     </button>
   </div>
 
-  <div class="text-gray-500 text-sm">
-    <p>Laporan mencakup data transaksi yang telah tersimpan di sistem GG-Mart.</p>
+  <div class="text-gray-500 text-sm pt-2">
+    <p>Laporan akan dibuka di tab baru dan mencakup data transaksi yang telah tersimpan di sistem GG-Mart.</p>
   </div>
 </div>
 

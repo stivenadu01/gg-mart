@@ -99,6 +99,10 @@ function riwayatTransaksiPage() {
     goPage(n) {
       this.pagination.page = n;
       this.fetchTransaksi(n);
+    },
+
+    cetakUlang(id) {
+      window.open(`${baseUrl}/admin/transaksi/print?id_transaksi=${id}`, '_blank');
     }
   }
 }

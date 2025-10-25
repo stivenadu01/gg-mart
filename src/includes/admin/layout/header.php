@@ -1,7 +1,3 @@
-<?php
-page_require_admin();
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 

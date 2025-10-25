@@ -1,4 +1,4 @@
-<div x-data="sidebarAdmin()" x-show="!fullscreen" x-transition.opacity>
+<div x-show="!fullscreen" x-transition.opacity>
   <aside
     :class="sidebarCollapse ? 'w-16' : 'w-64'"
     class="w-16 hidden lg:flex flex-col bg-white border-r shadow-md transition-all duration-300 fixed inset-y-0 left-0 z-10">
@@ -21,13 +21,7 @@
     </div>
 
     <!-- Menu -->
-    <nav class="flex-1 p-2 space-y-2">
-      <template x-for="menu in listMenuAdmin">
-        <a :href="baseUrl + menu.url" class="w-full justify-start hover:bg-gg-primary/70 hover:text-white" :class="location.pathname == menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'" :title="menu.title">
-          <span x-html="menu.ikon"></span>
-          <span x-show="!sidebarCollapse" class="ml-3" x-text="menu.title"></span>
-        </a>
-      </template>
+    <?php include INCLUDES_PATH . "/admin/layout/list_menu.php" ?>
     </nav>
   </aside>
 
@@ -55,15 +49,9 @@
           </svg>
         </button>
       </div>
-      <nav class="flex-1 p-2 space-y-2">
-        <template x-for="menu in listMenuAdmin">
-          <a :href="baseUrl + menu.url" class="w-full gap-2 hover:text-white justify-start hover:bg-gg-primary/70" :class="window.location.pathname==menu.url ? 'bg-gg-primary/90 text-white' : 'bg-transparent text-neutral-900'">
-            <span x-html="menu.ikon"></span>
-            <span x-text="menu.title"></span>
-          </a>
-        </template>
-      </nav>
+
+      <!-- MENU -->
+      <?php include INCLUDES_PATH . "/admin/layout/list_menu.php" ?>
     </aside>
   </div>
 </div>
-<script src=" <?= ASSETS_URL . 'js/sidebarAdmin.js' ?>"></script>

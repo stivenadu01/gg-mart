@@ -4,10 +4,10 @@ function transaksiPage() {
     keranjang: [],
     search: '',
     totalHarga: 0,
-    metodeBayar: 'TUNAI',
+    metodeBayar: 'tunai',
 
     async fetchProduk() {
-      let res = await fetch(`${baseUrl}/api/produk?search=${this.search}&limit=15`);
+      let res = await fetch(`${baseUrl}/api/produk?mode=trx&search=${encodeURIComponent(this.search)}`);
       res = await res.json();
       if (res.success) this.produk = res.data;
     },
@@ -15,11 +15,8 @@ function transaksiPage() {
     async tambahProdukDariInput() {
       if (!this.search.trim()) return;
 
-      // ubah pencarian ke lowercase untuk perbandingan tanpa case-sensitive
-      const keyword = this.search.trim().toLowerCase();
-
       // cari produk dengan nama persis sama
-      const produkDitemukan = this.produk.find(p => p.nama_produk.toLowerCase() === keyword);
+      const produkDitemukan = this.produk.length === 1 ? this.produk[0] : false;
 
       if (produkDitemukan) {
         if (produkDitemukan.stok == 0) return;
@@ -27,7 +24,7 @@ function transaksiPage() {
         this.search = ''; // reset input setelah berhasil
       } else {
         // kalau tidak ada yang cocok, bisa kasih sedikit feedback
-        showFlash(`Produk "${this.search}" tidak ditemukan!`);
+        showFlash(`Produk "${this.search}" tidak ditemukan!`, 'error');
       }
     },
 
@@ -77,14 +74,14 @@ function transaksiPage() {
       this.totalHarga = 0;
     },
 
-    async simpanTransaksi() {
+    async simpanTransaksi(cetakStruk = true) {
       if (this.keranjang.length === 0) {
-        showFlash('Keranjang masih kosong!');
+        showFlash('Keranjang masih kosong!', 'error');
         return;
       }
 
       let payload = {
-        id_user: 1, // nanti diganti sesuai user admin yang login
+        id_user: currentUser.id_user, // nanti diganti sesuai user admin yang login
         total_harga: this.totalHarga,
         metode_bayar: this.metodeBayar,
         detail: this.keranjang.map(i => ({
@@ -95,6 +92,7 @@ function transaksiPage() {
         })),
         status: 'selesai'
       };
+      console.log('Payload transaksi:', payload);
 
       let res = await fetch(`${baseUrl}/api/transaksi`, {
         method: 'POST',
@@ -109,6 +107,16 @@ function transaksiPage() {
         this.fetchProduk()
         this.resetKeranjang();
         showFlash('Transaksi berhasil disimpan!');
+
+        if (cetakStruk) {
+          if (window.electronAPI) {
+            window.electronAPI.printStruk(res.data.id);
+          } else {
+            // fallback kalau dibuka di browser biasa
+            window.open(`${baseUrl}/admin/transaksi/print?id_transaksi=${res.data.id}`, '_blank');
+          }
+        }
+
         document.getElementById('searchProduk').focus();
       } else {
         showFlash('Gagal simpan: ' + res.message, 'error');

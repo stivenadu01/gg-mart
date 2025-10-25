@@ -1,5 +1,17 @@
 <?php
 
+function findUser($id)
+{
+  global $conn;
+  $stmt = $conn->prepare("SELECT * FROM user WHERE id_user = ?");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $user = $result->fetch_assoc();
+  $stmt->close();
+  return $user;
+}
+
 function getUsers()
 {
   global $conn;

@@ -1,42 +1,42 @@
 <template x-if="!loading && kategori.length > 0">
-  <div class="md:p-3">
-    <!-- TABEL  -->
-    <div class="bg-white border border-gray-200 overflow-auto max-h-[80dvh] custom-scrollbar">
-      <table class="table">
+  <div class="space-y-3">
+    <div class="overflow-auto max-h-[80dvh] custom-scrollbar bg-white rounded-xl shadow-lg border border-gray-100">
+      <table class="app-table">
         <thead>
           <tr>
-            <th>No</th>
+            <th class="w-1">No</th>
             <th>Nama Kategori</th>
             <th>Deskripsi</th>
-            <th class="text-center">Aksi</th>
+            <th class="w-1 text-center">Aksi</th>
           </tr>
         </thead>
         <tbody>
           <template x-for="(k, i) in kategori" :key="k.id_kategori">
             <tr>
-              <td class="font-medium" x-text="i + 1 + (pagination.page-1)*pagination.limit"></td>
-              <td class="font-semibold text-neural-800 min-w-[200px]" x-text="k.nama_kategori"></td>
-              <td class="text-neutral-600 truncate max-w-xs" x-text="k.deskripsi || '-'"></td>
+              <td x-text="i + 1 + (pagination.page-1)*pagination.limit"></td>
+              <td class="font-semibold text-gray-800 min-w-[200px]" x-text="k.nama_kategori"></td>
+              <td class="text-gray-600 truncate max-w-xs" x-text="k.deskripsi || '-'"></td>
               <td class="text-center">
                 <div class="flex justify-center items-center gap-2">
                   <a :href="baseUrl + '/admin/kategori/form?act=edit&id=' + k.id_kategori"
-                    class="text-blue-600 hover:bg-blue-50 hover:text-blue-800 rounded-full"
+                    class="text-blue-600 hover:text-blue-800 transition p-1 rounded-full"
                     title="Edit Kategori">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                       viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M15.232 5.232a3 3 0 014.243 4.243L8.25 20.5H3.75v-4.5L15.232 5.232z" />
-                    </svg> <span class="hidden md:inline">Edit</span>
+                    </svg>
+                    <span class="hidden md:inline-block font-normal"> Edit</span>
                   </a>
                   <button @click="hapusKategori(k.id_kategori)"
-                    class="text-red-600 hover:bg-red-50 hover:text-red-800 rounded-full"
+                    class="text-red-600 hover:text-red-800 transition p-1 rounded-full"
                     title="Hapus Kategori">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                       viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span class="hidden md:inline"> Hapus</span>
+                    <span class="hidden md:inline-block font-normal"> Hapus</span>
                   </button>
                 </div>
               </td>

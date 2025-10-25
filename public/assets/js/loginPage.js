@@ -20,7 +20,7 @@ function loginPage() {
 
         const data = await res.json();
         if (data.success) {
-          if (data.user.role == 'admin') {
+          if (data.user.role == 'super_admin' || data.user.role == 'kasir' || data.user.role == 'manager') {
             showFlash(data.message + 'Mengarahkan ke dashboard...');
             setTimeout(() => {
               window.location.href = baseUrl + '/admin/dashboard';

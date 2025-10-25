@@ -10,7 +10,7 @@ function findKategori($id)
 function getAllKategori()
 {
   global $conn;
-  $sql = "SELECT * FROM kategori ORDER BY nama_kategori ASC";
+  $sql = "SELECT id_kategori, nama_kategori FROM kategori ORDER BY nama_kategori ASC";
   $res = $conn->query($sql);
 
   $kategori = [];

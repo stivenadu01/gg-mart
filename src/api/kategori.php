@@ -1,126 +1,120 @@
 <?php
-
 models('Kategori');
 require_once ROOT_PATH . '/config/api_init.php';
 
-// Ambil ID kategori (untuk Read One, PUT, DELETE)
-$id_kategori = isset($_GET['id']) ? intval($_GET['id']) : null;
-
-// Logika Penanganan Berdasarkan Metode HTTP
+$id_kategori = $_GET['k'] ?? null;
 $res = [];
 $status = 200;
-switch ($method) {
-  case 'GET':
-    // GET /api/kategori?mode=all
-    if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
-      $kategori = getAllKategori();
-      $res = ['success' => true, 'data' => $kategori];
-      break;
-    }
-    // GET /api/kategori?id=1
-    if ($id_kategori) {
-      $kategori = findKategori($id_kategori);
-      if ($kategori) {
-        $res = ['success' => true, 'data' => $kategori];
-      } else {
-        $res = ['success' => false, 'message' => 'Kategori tidak ditemukan'];
-        $status = 404;
-      }
-      break;
-    }
 
-    // GET /api/kategori
-    $page   = isset($_GET['halaman']) ? max(1, intval($_GET['halaman'])) : 1;
-    $limit  = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+switch ($method) {
+  // GET /api/kategori[?k=id]
+  case 'GET':
     try {
-      [$kategori, $total] = getKategoriList($page, $limit, $search);
+      // Mode: semua kategori (tanpa pagination)
+      if (isset($_GET['mode']) && $_GET['mode'] === 'all') {
+        $data = getAllKategori();
+        $res = ['success' => true, 'data' => $data];
+        break;
+      }
+
+      // Mode: detail kategori
+      if ($id_kategori) {
+        $kategori = findKategori($id_kategori);
+        if (!$kategori) throw new Exception('Kategori tidak ditemukan', 404);
+        $res = ['success' => true, 'data' => $kategori];
+        break;
+      }
+
+      // Mode: list + pagination + search
+      $page   = max(1, intval($_GET['halaman'] ?? 1));
+      $limit  = max(1, intval($_GET['limit'] ?? 10));
+      $search = trim($_GET['search'] ?? '');
+
+      [$data, $total] = getKategoriList($page, $limit, $search);
+
       $res = [
         'success' => true,
-        'data' => $kategori,
-        "pagination" => [
-          "total" => intval($total),
-          "page" => $page,
-          "limit" => $limit,
-          "total_pages" => ceil($total / $limit)
+        'data' => $data,
+        'pagination' => [
+          'page' => $page,
+          'limit' => $limit,
+          'total' => intval($total),
+          'total_pages' => ($limit > 0) ? ceil($total / $limit) : 1
         ]
       ];
     } catch (Exception $e) {
-      $res = ["success" => false, "message" => $e->getMessage()];
-      $status = 500;
+      $status = $e->getCode() ?: 500;
+      $res = ['success' => false, 'message' => $e->getMessage()];
     }
     break;
 
+  // POST /api/kategori
   case 'POST':
-    api_require_admin();
-    // POST /api/kategori
-    if (empty($input_data['nama_kategori'])) {
-      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
-      $status = 422;
-      break;
-    }
+    try {
+      if (empty($input_data['nama_kategori'])) {
+        throw new Exception('Nama kategori wajib diisi.', 422);
+      }
+      if (!isset($input_data['deskripsi'])) {
+        $input_data['deskripsi'] = '';
+      }
 
-    $is_tambah = tambahKategori($input_data);
+      if (!tambahKategori($input_data)) {
+        throw new Exception('Gagal menambahkan kategori ke database.', 500);
+      }
 
-    if ($is_tambah) {
       $res = ['success' => true, 'message' => 'Kategori berhasil ditambahkan'];
       $status = 201;
-    } else {
-      $res = ['success' => false, 'message' => 'Gagal menambahkan kategori'];
-      $status = 500;
-    }
-    break;
-
-  case 'PUT':
-    api_require_admin();
-    // PUT /api/kategori?id=1
-    if (!$id_kategori) {
-      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk update.'];
-      $status = 400;
-      break;
-    }
-
-    if (empty($input_data['nama_kategori'])) {
-      $res = ['success' => false, 'message' => 'Nama kategori wajib diisi.'];
-      $status = 422;
-      break;
-    }
-
-    $is_edit = editKategori($id_kategori, $input_data);
-
-    if ($is_edit) {
-      $res = ['success' => true, 'message' => 'Kategori berhasil diupdate'];
-    } else {
-      $res = ['success' => false, 'message' => 'Kategori gagal diupdate atau tidak ditemukan'];
-      $status = 404;
-    }
-    break;
-
-  case 'DELETE':
-    api_require_admin();
-    // DELETE /api/kategori?id=1
-    if (!$id_kategori) {
-      $res = ['success' => false, 'message' => 'ID kategori wajib diisi untuk delete.'];
-      $status = 400;
-      break;
-    }
-
-    try {
-      $is_hapus = hapusKategori($id_kategori);
-      if ($is_hapus) {
-        $res = ['success' => true, 'message' => 'Kategori berhasil dihapus'];
-      } else {
-        throw new Exception();
-      }
     } catch (Exception $e) {
-      $res = ['success' => false, 'message' => 'Terjadi kesalahan saat menghapus kategori'];
-      $status = 404;
+      $status = $e->getCode() ?: 500;
+      $res = ['success' => false, 'message' => $e->getMessage()];
+    }
+    break;
+
+  // PUT /api/kategori?k=1
+  case 'PUT':
+    try {
+      if (!$id_kategori) throw new Exception('ID kategori wajib diisi untuk update.', 400);
+      if (empty($input_data['nama_kategori'])) {
+        throw new Exception('Nama kategori wajib diisi.', 422);
+      }
+      if (!isset($input_data['deskripsi'])) {
+        $input_data['deskripsi'] = '';
+      }
+
+      if (!editKategori($id_kategori, $input_data)) {
+        throw new Exception('Kategori gagal diupdate atau tidak ditemukan.', 404);
+      }
+
+      $res = ['success' => true, 'message' => 'Kategori berhasil diupdate'];
+    } catch (Exception $e) {
+      $status = $e->getCode() ?: 500;
+      $res = ['success' => false, 'message' => $e->getMessage()];
+    }
+    break;
+
+  // DELETE /api/kategori?k=1
+  case 'DELETE':
+    try {
+      if (!$id_kategori) throw new Exception('ID kategori wajib diisi untuk delete.', 400);
+
+      $kategori = findKategori($id_kategori);
+      if (!$kategori) throw new Exception('Kategori tidak ditemukan.', 404);
+
+      if (!hapusKategori($id_kategori)) {
+        throw new Exception('Kategori gagal dihapus.', 500);
+      }
+
+      $res = ['success' => true, 'message' => 'Kategori berhasil dihapus'];
+    } catch (Exception $e) {
+      $status = $e->getCode() ?: 500;
+      $res = ['success' => false, 'message' => $e->getMessage()];
     }
     break;
 
   default:
-    $res = ['success' => false, 'message' => 'Metode ' . $method . ' tidak didukung.'];
     $status = 405;
+    $res = ['success' => false, 'message' => 'Metode tidak didukung'];
+    break;
 }
-// respon
+
 respond_json($res, $status);

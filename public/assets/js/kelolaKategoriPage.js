@@ -14,13 +14,13 @@ function kelolaKategoriPage() {
       this.loading = true;
       const urlApi = `${baseUrl}/api/kategori?halaman=${page}&limit=${this.pagination.limit}&search=${encodeURIComponent(this.search)}`;
       try {
-        const res = await fetch(urlApi);
-        const data = await res.json();
-        if (data.success) {
-          this.kategori = data.data;
-          this.pagination = data.pagination;
+        let res = await fetch(urlApi);
+        res = await res.json();
+        if (res.success) {
+          this.kategori = res.data;
+          this.pagination = res.pagination;
         } else {
-          console.error("API error:", data.message);
+          console.error("API error:", res.message);
         }
       } catch (e) {
         console.error("FetchKategori error:", e);

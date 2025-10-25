@@ -1,22 +1,21 @@
 <template x-if="!loading && transaksi.length > 0">
-  <div class="md:p-3">
-    <!-- TABEL -->
-    <div class="bg-white rounded-md shadow-sm border border-gray-200 overflow-auto max-h-[80dvh] custom-scrollbar">
-      <table class="table">
+  <div class="space-y-3">
+    <div class="overflow-auto max-h-[80dvh] custom-scrollbar">
+      <table class="app-table">
         <thead>
           <tr>
-            <th>No</th>
+            <th class="w-1">No</th>
             <th>Tanggal</th>
             <th>Kode</th>
             <th>Kasir</th>
             <th>Metode</th>
             <th class="text-right">Total</th>
-            <th>Aksi</th>
+            <th class="w-1">Aksi</th>
           </tr>
         </thead>
         <tbody>
           <template x-for="(t, i) in transaksi" :key="t.id_transaksi">
-            <tr class="hover:bg-gray-50">
+            <tr>
               <td x-text="i + 1 + (pagination.page-1)*pagination.limit"></td>
               <td x-text="formatDateTime(t.tanggal_transaksi)" class="whitespace-nowrap"></td>
               <td x-text="t.kode_transaksi"></td>
@@ -24,15 +23,14 @@
               <td x-text="t.metode_bayar"></td>
               <td class="text-right font-semibold" x-text="formatRupiah(t.total_harga)"></td>
               <td class="text-center">
-                <div class="flex">
-                  <button @click="lihatDetail(t.id_transaksi)" class="text-blue-500 hover:underline text-sm">Detail</button>
-                </div>
+                <button @click="lihatDetail(t.id_transaksi)" class="text-blue-600 hover:text-blue-700 font-medium transition">Detail</button>
               </td>
             </tr>
           </template>
         </tbody>
       </table>
     </div>
+
     <!-- PAGINATION -->
     <div class="flex flex-col p-4 md:flex-row justify-between items-center border-t border-gray-100 gap-3 bg-gray-50">
       <p class="text-sm text-gray-500" x-text="`Menampilkan ${transaksi.length} dari ${pagination.total} transaksi`"></p>
@@ -50,5 +48,6 @@
           class="px-3 py-1 border rounded-md disabled:opacity-40 hover:bg-gray-100">›</button>
       </div>
     </div>
+
   </div>
 </template>

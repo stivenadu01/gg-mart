@@ -1,39 +1,31 @@
--- =====================================================
--- DATABASE: gg_mart
--- =====================================================
-CREATE DATABASE IF NOT EXISTS gg_mart;
-USE gg_mart;
+-- DATABASE: ggmart
+CREATE DATABASE IF NOT EXISTS ggmart;
+USE ggmart;
 
--- =====================================================
 -- TABLE: user
--- =====================================================
 CREATE TABLE IF NOT EXISTS user (
     id_user INT AUTO_INCREMENT PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'user') DEFAULT 'user',
+    role ENUM('super_admin', 'kasir', 'manager', 'user') DEFAULT 'user',
     tanggal_dibuat DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================================
 -- TABLE: kategori
--- =====================================================
 CREATE TABLE IF NOT EXISTS kategori (
     id_kategori INT AUTO_INCREMENT PRIMARY KEY,
     nama_kategori VARCHAR(100) NOT NULL,
     deskripsi TEXT
 );
 
--- =====================================================
 -- TABLE: produk
--- =====================================================
 CREATE TABLE IF NOT EXISTS produk (
-    kode_produk CHAR(12) PRIMARY KEY,
+    kode_produk CHAR(15) PRIMARY KEY,
     id_kategori INT,
     nama_produk VARCHAR(150) NOT NULL,
     deskripsi TEXT,
-    harga INT NOT NULL,
+    harga_jual DECIMAL(12, 2) NOT NULL,
     stok INT DEFAULT 0,
     terjual INT DEFAULT 0,
     gambar VARCHAR(255),
@@ -45,17 +37,32 @@ CREATE TABLE IF NOT EXISTS produk (
         ON UPDATE CASCADE
 );
 
--- =====================================================
+CREATE TABLE IF NOT EXISTS mutasi_stok (
+  id_mutasi INT AUTO_INCREMENT PRIMARY KEY,
+  kode_produk CHAR(15),
+  nama_produk VARCHAR(150), -- kalau produk dihapus tetap ada nama
+  type ENUM('masuk','keluar') NOT NULL,
+  jumlah INT NOT NULL,
+  total_pokok DECIMAL(12, 2),
+  keterangan TEXT,
+  harga_pokok DECIMAL(12, 2),
+  sisa_stok INT,
+  tanggal DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (kode_produk) REFERENCES produk(kode_produk)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+
 -- TABLE: transaksi
--- =====================================================
 CREATE TABLE IF NOT EXISTS transaksi (
-    id_transaksi INT AUTO_INCREMENT PRIMARY KEY,
+    kode_transaksi CHAR(15) PRIMARY KEY,
     id_user INT,
     tanggal_transaksi DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total_harga INT NOT NULL,
-    status ENUM('pending','diproses','dikirim','selesai','batal') DEFAULT 'pending',
-    kode_transaksi CHAR(15) UNIQUE,
-    metode_bayar ENUM('QRIS','TUNAI') DEFAULT 'TUNAI',
+    total_harga DECIMAL(12, 2) NOT NULL,
+    total_pokok DECIMAL(12, 2),
+    status ENUM('selesai') DEFAULT 'selesai',
+    metode_bayar ENUM('qris','tunai') DEFAULT 'tunai',
     CONSTRAINT fk_transaksi_user
         FOREIGN KEY (id_user)
         REFERENCES user(id_user)
@@ -63,20 +70,20 @@ CREATE TABLE IF NOT EXISTS transaksi (
         ON UPDATE CASCADE
 );
 
--- =====================================================
 -- TABLE: detail_transaksi
--- =====================================================
 CREATE TABLE IF NOT EXISTS detail_transaksi (
     id_detail INT AUTO_INCREMENT PRIMARY KEY,
-    id_transaksi INT NOT NULL,
-    kode_produk CHAR(12),
+    kode_transaksi CHAR(15) NOT NULL,
+    kode_produk CHAR(15),
     jumlah INT DEFAULT 1,
-    harga_satuan INT NOT NULL,
-    subtotal INT NOT NULL,
+    harga_satuan DECIMAL(12, 2),
+    harga_pokok DECIMAL(12, 2),
+    subtotal DECIMAL(12, 2),
+    subtotal_pokok DECIMAL(12, 2),
 
     CONSTRAINT fk_detail_transaksi
-        FOREIGN KEY (id_transaksi)
-        REFERENCES transaksi(id_transaksi)
+        FOREIGN KEY (kode_transaksi)
+        REFERENCES transaksi(kode_transaksi)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
@@ -85,14 +92,4 @@ CREATE TABLE IF NOT EXISTS detail_transaksi (
         REFERENCES produk(kode_produk)
         ON DELETE SET NULL
         ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS stok (
-  id_stok INT AUTO_INCREMENT PRIMARY KEY,
-  kode_produk CHAR(12) NOT NULL,
-  tipe ENUM('masuk','keluar') NOT NULL,
-  jumlah INT NOT NULL,
-  tanggal DATETIME DEFAULT CURRENT_TIMESTAMP,
-  keterangan TEXT,
-  FOREIGN KEY (kode_produk) REFERENCES produk(kode_produk)
 );

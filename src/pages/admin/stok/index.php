@@ -3,96 +3,95 @@ $pageTitle = "Kelola Stok";
 include INCLUDES_PATH . "/admin/layout/header.php";
 ?>
 
-<div x-data="kelolaStokPage()" x-init="fetchStok()" class="bg-gray-50 space-y-3">
+<div x-data="kelolaStokPage()" x-init="fetchMutasiStok()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-4">
+
   <!-- HEADER -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-3 lg:p-5">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-neutral-800 tracking-tight">Kelola Stok Produk</h1>
-      <p class="text-sm text-gray-500">Pantau dan kelola perubahan stok produk GG-Mart.</p>
+      <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">Kelola Perubahan Stok Produk</h1>
+      <p class="text-sm text-gray-500">Pantau dan kelola perubahan stok produk GGMart dari sini.</p>
     </div>
 
     <div class="flex items-center gap-3">
-      <!-- TOMBOL TAMBAH -->
+      <button @click="showFilter = !showFilter"
+        class="md:hidden btn bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2.5 w-auto flex items-center gap-1 rounded-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 14.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 019 17v-2.586L3.293 6.707A1 1 0 013 6V4z" />
+        </svg>
+        Filter
+      </button>
+
       <a :href="baseUrl + '/admin/stok/form'"
-        class="bg-gg-accent hover:bg-gg-accent-hover text-white px-5 py-2 rounded-md font-medium shadow-sm">
-        + Tambah Perubahan Stok
+        class="btn btn-accent px-5 py-2.5 w-auto rounded-lg font-semibold">
+        + <span class="hidden sm:inline">Tambah perubahan stok</span>
       </a>
     </div>
+  </div>
+
+  <!-- FILTER -->
+  <div :class="showFilter ? 'block' : 'hidden md:block'"
+    x-transition
+    class="bg-white rounded-xl shadow-md p-4 border border-gray-100">
+
+    <form @submit.prevent="applyFilter()" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+
+      <div class="lg:col-span-3">
+        <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Item</label>
+        <div class="relative">
+          <input type="text" id="filter_search" x-model.debounce.500ms="filter.search"
+            placeholder="Cari Item"
+            class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
+          <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="sm:col-span-1">
+        <label for="filter_type" class="text-xs font-semibold text-gray-600 mb-1 block">Tipe</label>
+        <select id="filter_type" x-model="filter.type"
+          class="w-full form-select h-10 border border-gray-300 rounded-lg focus:border-gg-primary focus:ring-gg-primary text-sm">
+          <option value="">Semua</option>
+          <option value="masuk">Stok Masuk</option>
+          <option value="keluar">Stok Keluar</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary h-10 px-4 w-full sm:col-span-1">Terapkan</button>
+
+      <button type="button" @click="resetFilter"
+        :disabled="!filter.type && !filter.search"
+        class="btn bg-gray-100 text-gray-700 h-10 px-4 w-full sm:col-span-1 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        Reset
+      </button>
+    </form>
   </div>
 
   <!-- LOADING -->
   <?php include INCLUDES_PATH . '/loading.php' ?>
 
-  <!-- TABEL -->
-  <template x-if="!loading && stok.length > 0">
-    <div class="md:p-3">
-      <div
-        class="bg-white rounded-md shadow-sm border border-gray-200 overflow-auto max-h-[80dvh] custom-scrollbar">
-        <table class="table">
-          <!-- HEAD -->
-          <thead class="sticky top-0 bg-gray-100 z-10">
-            <tr class="text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              <th class="p-3">Tanggal</th>
-              <th class="p-3">Produk</th>
-              <th class="p-3">Tipe</th>
-              <th class="p-3 text-right">Jumlah</th>
-              <th class="p-3">Keterangan</th>
-              <th class="p-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-
-          <!-- BODY -->
-          <tbody>
-            <template x-for="s in stok" :key="s.id_stok">
-              <tr>
-                <!-- TANGGAL -->
-                <td class="p-3 whitespace-nowrap" x-text="formatDateTime(s.tanggal)"></td>
-
-                <!-- PRODUK -->
-                <td class="p-3 whitespace-nowrap" x-text="s.nama_produk"></td>
-
-                <!-- TIPE -->
-                <td class="p-3 font-semibold">
-                  <span :class="s.tipe === 'masuk' ? 'text-green-600' : 'text-red-600'"
-                    x-text="s.tipe.toUpperCase()"></span>
-                </td>
-
-                <!-- JUMLAH -->
-                <td class="p-3 text-right font-medium" x-text="s.jumlah"></td>
-
-                <!-- KETERANGAN -->
-                <td class="p-3 truncate max-w-[250px]" x-text="s.keterangan || '-'"></td>
-
-                <!-- AKSI -->
-                <td class="p-3 text-center">
-                  <button @click="hapusRiwayat(s.id_stok, s.jumlah, s.kode_produk)"
-                    class="rounded-full text-red-600 hover:bg-red-50 hover:text-red-700 p-2 transition"
-                    title="Hapus Riwayat">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </template>
+  <!-- TABLE -->
+  <?php include INCLUDES_PATH . '/admin/table_mutasi_stok.php' ?>
 
   <!-- KOSONG -->
-  <template x-if="!loading && stok.length === 0">
-    <div class="bg-white rounded-lg shadow p-12 text-center border border-gray-200">
-      <img :src="baseUrl + '/assets/img/no-image.webp'" alt="Tidak ada data"
-        class="mx-auto w-28 h-28 opacity-60 mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Belum ada perubahan stok</h3>
-      <p class="text-sm text-neutral-500 mb-4">Tambahkan perubahan stok untuk memulai pencatatan.</p>
-      <a :href="baseUrl + '/admin/stok/form'"
-        class="inline-block bg-gg-accent hover:bg-gg-accent-hover text-white px-6 py-2 rounded-md font-medium shadow-sm">
-        + <span class="hidden sm:inline">Tambah Perubahan Stok</span>
+  <template x-if="!loading && mutasiStok.length === 0">
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center border-2 border-dashed border-gray-300">
+      <div class="mx-auto w-24 h-24 flex items-center justify-center mb-4 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke-width="1.5" stroke="currentColor" class="w-24 h-24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 7.5V6a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 6v1.5M3 7.5h18m-18 0v10.125A2.25 2.25 0 005.25 19.875h13.5A2.25 2.25 0 0021 17.625V7.5M8.25 10.5h7.5" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-800">Belum ada perubahan stok</h3>
+      <p class="text-sm text-gray-500 mb-4">Tambahkan perubahan stok untuk memulai pencatatan.</p>
+      <a :href="baseUrl + '/admin/stok/form'" class="btn btn-accent px-6 py-2.5 w-auto">
+        + Tambah perubahan stok</span>
       </a>
     </div>
   </template>

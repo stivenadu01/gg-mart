@@ -1,15 +1,15 @@
 <?php
 
-function getDetailTransaksi($id_transaksi)
+function getDetailTransaksi($kode_transaksi)
 {
   global $conn;
   $stmt = $conn->prepare("
     SELECT d.*, p.nama_produk 
     FROM detail_transaksi d
-    JOIN produk p ON d.kode_produk = p.kode_produk
-    WHERE d.id_transaksi = ?
+    LEFT JOIN produk p ON d.kode_produk = p.kode_produk
+    WHERE d.kode_transaksi = ?
   ");
-  $stmt->bind_param("i", $id_transaksi);
+  $stmt->bind_param("s", $kode_transaksi);
   $stmt->execute();
   $res = $stmt->get_result();
   $data = [];
@@ -23,26 +23,29 @@ function getDetailTransaksi($id_transaksi)
 function tambahDetailTransaksi($data)
 {
   global $conn;
-
-  $sql = "INSERT INTO detail_transaksi (id_transaksi, kode_produk, jumlah, harga_satuan, subtotal) VALUES (?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO detail_transaksi (kode_transaksi, kode_produk, jumlah, harga_satuan, harga_pokok, subtotal, subtotal_pokok)
+          VALUES (?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
-    "isiii",
-    $data['id_transaksi'],
+    "ssidddd",
+    $data['kode_transaksi'],
     $data['kode_produk'],
     $data['jumlah'],
     $data['harga_satuan'],
-    $data['subtotal']
+    $data['harga_pokok'],
+    $data['subtotal'],
+    $data['subtotal_pokok']
   );
   $res = $stmt->execute();
+  $stmt->close();
   return $res;
 }
 
-function hapusDetailTransaksi($id_transaksi)
+function hapusDetailTransaksi($kode_transaksi)
 {
   global $conn;
-  $stmt = $conn->prepare("DELETE FROM detail_transaksi WHERE id_transaksi=?");
-  $stmt->bind_param("i", $id_transaksi);
+  $stmt = $conn->prepare("DELETE FROM detail_transaksi WHERE kode_transaksi = ?");
+  $stmt->bind_param("s", $kode_transaksi);
   $res = $stmt->execute();
   $stmt->close();
   return $res;

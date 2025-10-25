@@ -3,7 +3,7 @@ $pageTitle = "Dashboard Admin";
 include INCLUDES_PATH . "/admin/layout/header.php";
 ?>
 
-<div x-data="dashboardAdminPage()" x-init="fetchDashboard()" class="bg-gray-50 min-h-[100dvh] p-4 lg:p-6 space-y-6">
+<div x-data="dashboardAdminPage()" x-init="fetchDashboard()" class="bg-gray-50 min-h-[100dvh] p-2 lg:p-4 space-y-4">
   <!-- HEADER -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
     <div>

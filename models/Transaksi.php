@@ -1,46 +1,31 @@
 <?php
 
-function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null,  $order_by = 'tanggal_transaksi', $order_dir = 'DESC')
+function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null, $order_by = 'tanggal_transaksi', $order_dir = 'DESC')
 {
   global $conn;
   $offset = ($page - 1) * $limit;
-
   $conditions = [];
 
-  // filter search
   if ($search) {
     $safe = "%" . $conn->real_escape_string($search) . "%";
-    $conditions[] = "kode_transaksi LIKE '$safe'";
+    $conditions[] = "t.kode_transaksi LIKE '$safe'";
   }
 
-  // filter tanggal
   if ($start && $end) {
     $safeStart = $conn->real_escape_string($start);
     $safeEnd = $conn->real_escape_string($end);
-    $conditions[] = "DATE(tanggal_transaksi) BETWEEN '$safeStart' AND '$safeEnd'";
+    $conditions[] = "DATE(t.tanggal_transaksi) BETWEEN '$safeStart' AND '$safeEnd'";
   }
-  // filter metode bayar
+
   if ($metode) {
     $safeMetode = $conn->real_escape_string($metode);
-    $conditions[] = "metode_bayar = '$safeMetode'";
-  }
-  // search id transaksi
-  if ($search) {
-    $safeSearch = "%" . $conn->real_escape_string($search) . "%";
-    $where = "WHERE p.nama_produk LIKE '$safeSearch' OR k.nama_kategori LIKE '$safeSearch'";
+    $conditions[] = "t.metode_bayar = '$safeMetode'";
   }
 
+  $where = count($conditions) > 0 ? "WHERE " . implode(" AND ", $conditions) : "";
 
-  $where = '';
-  if (count($conditions) > 0) {
-    $where = "WHERE " . implode(" AND ", $conditions);
-  }
+  $total = $conn->query("SELECT COUNT(*) AS total FROM transaksi t $where")->fetch_assoc()['total'] ?? 0;
 
-  // hitung total
-  $resCount = $conn->query("SELECT COUNT(*) AS total FROM transaksi $where");
-  $total = $resCount->fetch_assoc()['total'];
-
-  // ambil data
   $res = $conn->query("
       SELECT t.*, u.nama AS kasir
       FROM transaksi t
@@ -51,81 +36,57 @@ function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null,
     ");
 
   $data = [];
-  while ($row = $res->fetch_assoc()) {
-    $data[] = $row;
-  }
+  while ($row = $res->fetch_assoc()) $data[] = $row;
 
   return [$data, $total];
 }
 
-
-function findTransaksi($id_transaksi)
+function findTransaksi($kode_transaksi)
 {
   global $conn;
-  $sql = "SELECT * FROM transaksi WHERE id_transaksi=$id_transaksi";
-  $result = $conn->query($sql);
-  $result = $result->fetch_assoc();
-  return $result;
+  $stmt = $conn->prepare("SELECT * FROM transaksi WHERE kode_transaksi = ?");
+  $stmt->bind_param("s", $kode_transaksi);
+  $stmt->execute();
+  $res = $stmt->get_result()->fetch_assoc();
+  $stmt->close();
+  return $res;
 }
 
 function tambahTransaksi($data)
 {
   global $conn;
-  $sql = "INSERT INTO transaksi (id_user, total_harga, status, kode_transaksi, metode_bayar) VALUES (?, ?, ?, ?, ?)";
+  $sql = "INSERT INTO transaksi (kode_transaksi, id_user, total_harga, total_pokok, status, metode_bayar)
+          VALUES (?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param(
-    "iisss",
+    "siddss",
+    $data['kode_transaksi'],
     $data['id_user'],
     $data['total_harga'],
+    $data['total_pokok'],
     $data['status'],
-    $data['kode_transaksi'],
     $data['metode_bayar']
   );
-  $stmt->execute();
-  $insert_id = $stmt->insert_id;
-  $stmt->close();
-  return $insert_id; // kembalikan id transaksi baru
-}
-
-function updateTransaksi($id_transaksi, $data)
-{
-  global $conn;
-  $sql = "UPDATE transaksi SET total_harga=?, status=?, metode_bayar=? WHERE id_transaksi=?";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param(
-    "issi",
-    $data['total_harga'],
-    $data['status'],
-    $data['metode_bayar'],
-    $id_transaksi
-  );
   $res = $stmt->execute();
   $stmt->close();
   return $res;
 }
 
-function hapusTransaksi($id_transaksi)
+function hapusTransaksi($kode_transaksi)
 {
   global $conn;
-  $stmt = $conn->prepare("DELETE FROM transaksi WHERE id_transaksi=?");
-  $stmt->bind_param("i", $id_transaksi);
+  $stmt = $conn->prepare("DELETE FROM transaksi WHERE kode_transaksi = ?");
+  $stmt->bind_param("s", $kode_transaksi);
   $res = $stmt->execute();
   $stmt->close();
   return $res;
 }
 
-
-
-// tambahan
 function getPendapatanByDate($date)
 {
   global $conn;
   $safe = $conn->real_escape_string($date);
-  $sql = "
-    SELECT COALESCE(SUM(total_harga), 0) AS pendapatan
-    FROM transaksi
-    WHERE DATE(tanggal_transaksi) = '{$safe}'
-  ";
+  $sql = "SELECT COALESCE(SUM(total_harga), 0) AS pendapatan FROM transaksi WHERE DATE(tanggal_transaksi) = '$safe'";
   $res = $conn->query($sql);
   return floatval($res ? $res->fetch_assoc()['pendapatan'] : 0);
 }
@@ -137,8 +98,8 @@ function getProdukTerjualByDate($date)
   $sql = "
     SELECT COALESCE(SUM(dt.jumlah), 0) AS total_item
     FROM detail_transaksi dt
-    JOIN transaksi t ON dt.id_transaksi = t.id_transaksi
-    WHERE DATE(t.tanggal_transaksi) = '{$safe}'
+    JOIN transaksi t ON dt.kode_transaksi = t.kode_transaksi
+    WHERE DATE(t.tanggal_transaksi) = '$safe'
   ";
   $res = $conn->query($sql);
   return intval($res ? $res->fetch_assoc()['total_item'] : 0);

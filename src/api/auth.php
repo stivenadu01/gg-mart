@@ -1,6 +1,6 @@
 <?php
 
-models('user');
+models('User');
 require ROOT_PATH . '/config/api_init.php';
 
 $logout = $_GET['logout'] ?? null;

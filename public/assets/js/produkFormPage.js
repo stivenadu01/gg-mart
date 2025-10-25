@@ -1,19 +1,27 @@
 function produkFormPage(act, id) {
   return {
-    form: {
-      nama_produk: '',
-      id_kategori: '',
-      harga: '',
-      deskripsi: '',
-      gambar: null
-    },
+    page: 1,
     kategori: [],
+    items: [],
+    satuan_dasar: '',
     preview: null,
+
     isEdit: act === 'edit',
     formTitle: act === 'edit' ? 'Edit Produk' : 'Tambah Produk',
 
+    form: {
+      id_kategori: '',
+      nama_produk: '',
+      harga_jual: '',
+      id_item: '',
+      jumlah_satuan: '',
+      deskripsi: '',
+      gambar: null
+    },
+
     async initPage() {
       await this.fetchKategori();
+      await this.fetchItems();
       if (this.isEdit && id) await this.fetchProduk(id);
     },
 
@@ -23,22 +31,21 @@ function produkFormPage(act, id) {
       if (data.success) this.kategori = data.data;
     },
 
+    async fetchItems() {
+      const res = await fetch(`${baseUrl}/api/itemStok?mode=all`);
+      const data = await res.json();
+      if (data.success) this.items = data.data;
+    },
+
     async fetchProduk(kode) {
-      let res = await fetch(`${baseUrl}/api/produk?k=${kode}`);
-      res = await res.json();
-      if (res.success) {
-        const data = res.data;
-        this.form = {
-          nama_produk: data.nama_produk,
-          id_kategori: data.id_kategori,
-          harga: data.harga,
-          stok: data.stok,
-          deskripsi: data.deskripsi,
-          gambar: null
-        };
-        this.kategoriKeyword = data.nama_kategori; // ← tampilkan nama kategori
-        if (data.gambar) this.preview = `${uploadsUrl}/${data.gambar}`;
+      const res = await fetch(`${baseUrl}/api/produk?k=${kode}`);
+      const data = await res.json();
+      if (data.success) {
+        this.form = { ...data.data }
+        if (data.data.gambar) this.preview = `${uploadsUrl}/${data.data.gambar}`;
+        this.updateSatuan();
       }
+      console.log(this.form);
     },
 
     onFileChange(e) {
@@ -49,21 +56,20 @@ function produkFormPage(act, id) {
       }
     },
 
-    async submitForm() {
-      if (!this.form.id_kategori) {
-        showFlash("Pilih kategori yang valid dari daftar!");
-        return;
-      }
+    updateSatuan() {
+      const selected = this.items.find(i => i.id_item == this.form.id_item);
+      this.satuan_dasar = selected ? selected.satuan_dasar : '';
+    },
 
+    nextPage() {
+      if (this.page < 3) this.page++;
+    },
+
+    async submitForm() {
       const formData = new FormData();
       for (const key in this.form) {
-        if (this.form[key] !== null) formData.append(key, this.form[key]);
+        formData.append(key, this.form[key]);
       }
-
-      if (this.form.gambar instanceof File) {
-        formData.append("gambar", this.form.gambar);
-      }
-
       if (this.isEdit) formData.append("_method", "PUT");
 
       const url = this.isEdit
@@ -74,17 +80,11 @@ function produkFormPage(act, id) {
       const data = await res.json();
 
       if (data.success) {
-        if (this.isEdit) {
-          showFlash("Produk berhasil diupdate!");
-          setTimeout(() => window.location.href = `${baseUrl}/admin/produk`, 1000);
-        } else {
-          showFlash(this.isEdit ? "Produk berhasil diupdate!" : "Produk berhasil ditambahkan!");
-          this.form = {};
-          this.kategoriKeyword = '';
-        }
+        showFlash(this.isEdit ? "Produk berhasil diperbarui!" : "Produk berhasil ditambahkan!");
+        setTimeout(() => window.location.href = `${baseUrl}/admin/produk`, 1000);
       } else {
         showFlash("Gagal menyimpan produk: " + data.message, 'error');
       }
-    },
+    }
   };
 }
