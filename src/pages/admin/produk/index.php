@@ -14,7 +14,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
 
     <div class="flex items-center gap-3">
       <button @click="showFilter = !showFilter"
-        class="md:hidden btnbtn-gray w-auto flex items-center gap-1 rounded-lg">
+        class="md:hidden btn btn-gray w-auto flex items-center gap-1 rounded-lg">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round"

@@ -5,11 +5,14 @@ function transaksiPage() {
     search: '',
     totalHarga: 0,
     metodeBayar: 'tunai',
+    submitting: false,
 
     async fetchProduk() {
-      let res = await fetch(`${baseUrl}/api/produk?mode=trx&search=${encodeURIComponent(this.search)}`);
-      res = await res.json();
-      if (res.success) this.produk = res.data;
+      if (this.search == '') return;
+      const res = await fetch(`${baseUrl}/api/produk?mode=trx&search=${encodeURIComponent(this.search)}`);
+      const data = await res.json();
+      console.log(data.data);
+      if (data.success) this.produk = data.data;
     },
 
     async tambahProdukDariInput() {
@@ -19,17 +22,17 @@ function transaksiPage() {
       const produkDitemukan = this.produk.length === 1 ? this.produk[0] : false;
 
       if (produkDitemukan) {
-        if (produkDitemukan.stok == 0) return;
         this.tambahKeranjang(produkDitemukan);
-        this.search = ''; // reset input setelah berhasil
+        this.search = '';
+        this.search.focus();
       } else {
-        // kalau tidak ada yang cocok, bisa kasih sedikit feedback
-        showFlash(`Produk "${this.search}" tidak ditemukan!`, 'error');
+        showFlash(`Produk "${this.search}" tidak ditemukan!`, 'warning');
       }
     },
 
 
     tambahKeranjang(p) {
+      if (p.stok <= 0) showFlash(`Stok ${p.nama_produk} tidak cukup`, 'warning');
       let idx = this.keranjang.findIndex(i => i.kode_produk === p.kode_produk);
       if (idx >= 0) {
         if (this.keranjang[idx].jumlah < p.stok) {
@@ -41,9 +44,9 @@ function transaksiPage() {
         this.keranjang.push({
           kode_produk: p.kode_produk,
           nama_produk: p.nama_produk,
-          harga_satuan: Number(p.harga),
+          harga_satuan: Number(p.harga_jual),
           jumlah: 1,
-          subtotal: Number(p.harga),
+          subtotal: Number(p.harga_jual),
           stok: p.stok // simpan stok di keranjang
         });
       }
@@ -75,51 +78,56 @@ function transaksiPage() {
     },
 
     async simpanTransaksi(cetakStruk = true) {
-      if (this.keranjang.length === 0) {
-        showFlash('Keranjang masih kosong!', 'error');
-        return;
-      }
-
-      let payload = {
-        id_user: currentUser.id_user, // nanti diganti sesuai user admin yang login
-        total_harga: this.totalHarga,
-        metode_bayar: this.metodeBayar,
-        detail: this.keranjang.map(i => ({
-          kode_produk: i.kode_produk,
-          jumlah: i.jumlah,
-          harga_satuan: i.harga_satuan,
-          subtotal: i.subtotal
-        })),
-        status: 'selesai'
-      };
-      console.log('Payload transaksi:', payload);
-
-      let res = await fetch(`${baseUrl}/api/transaksi`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      res = await res.json();
-      if (await res.success) {
-        this.search = '';
-        this.fetchProduk()
-        this.resetKeranjang();
-        showFlash('Transaksi berhasil disimpan!');
-
-        if (cetakStruk) {
-          if (window.electronAPI) {
-            window.electronAPI.printStruk(res.data.id);
-          } else {
-            // fallback kalau dibuka di browser biasa
-            window.open(`${baseUrl}/admin/transaksi/print?id_transaksi=${res.data.id}`, '_blank');
-          }
+      try {
+        this.submitting = true;
+        if (this.keranjang.length === 0) {
+          showFlash('Keranjang masih kosong!', 'warning');
+          return;
         }
 
-        document.getElementById('searchProduk').focus();
-      } else {
-        showFlash('Gagal simpan: ' + res.message, 'error');
+        let payload = {
+          id_user: currentUser?.id_user ?? 1,
+          total_harga: this.totalHarga,
+          metode_bayar: this.metodeBayar,
+          detail: this.keranjang.map(i => ({
+            kode_produk: i.kode_produk,
+            jumlah: i.jumlah,
+            subtotal: i.subtotal,
+            harga_satuan: i.harga_satuan
+          })),
+          status: 'selesai'
+        };
+        console.log('Payload transaksi:', payload);
+        const res = await fetch(`${baseUrl}/api/transaksi`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (await data.success) {
+          this.search = '';
+          this.resetKeranjang();
+          showFlash('Transaksi berhasil disimpan!');
+
+          if (cetakStruk) {
+            if (window.electronAPI) {
+              window.electronAPI.printStruk(res.data.kode_transaksi);
+            } else {
+              // fallback kalau dibuka di browser biasa
+              window.open(`${baseUrl}/admin/transaksi/print?kode=${res.data.kode_transaksi}`, '_blank');
+            }
+          }
+
+          document.getElementById('searchProduk').focus();
+        } else {
+          showFlash('Gagal simpan: ' + data.message, 'error');
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        this.submitting = false;
       }
     }
   }

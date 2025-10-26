@@ -83,7 +83,7 @@ function hapusMutasiStok($id)
 function getMutasiByProduk($kode)
 {
   global $conn;
-  $stmt = $conn->prepare("SELECT * FROM mutasi_stok WHERE kode_produk=? AND sisa_stok > 0 AND type='masuk' ORDER BY tanggal DESC");
+  $stmt = $conn->prepare("SELECT * FROM mutasi_stok WHERE kode_produk=? AND sisa_stok > 0 AND type='masuk' ORDER BY tanggal ASC");
   $stmt->bind_param('s', $kode);
   $stmt->execute();
   $res = $stmt->get_result();

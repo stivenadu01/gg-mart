@@ -148,3 +148,21 @@ function updateStokProduk($kode)
 
   return $conn->query("UPDATE produk SET stok = '$stok' WHERE kode_produk='$kode'");
 }
+
+function getProdukTrx($search)
+{
+  global $conn;
+  $safe = "%" . $conn->real_escape_string($search) . "%";
+  $res = $conn->query("SELECT p.*, k.nama_kategori FROM produk p LEFT JOIN kategori k ON p.id_kategori = k.id_kategori WHERE nama_produk LIKE '$safe' OR kode_produk LIKE '$safe' ORDER BY stok DESC LIMIT 10");
+  $data = [];
+  while ($row = $res->fetch_assoc()) {
+    $data[] = $row;
+  }
+  return $data;
+}
+
+function ubahTerjualProduk($kode, $jumlah)
+{
+  global $conn;
+  return $conn->query("UPDATE produk SET terjual= terjual + '$jumlah' WHERE kode_produk='$kode'");
+}

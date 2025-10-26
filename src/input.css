@@ -20,7 +20,7 @@
   }
 
 
-  input:not([type="checkbox"]):not([type="radio"]),
+  input:not([type="checkbox"]):not([type="radio"]):not(.input-trx),
   textarea,
   select {
     @apply w-full border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-gg-primary focus:border-gg-primary focus:outline-none transition-colors duration-200;

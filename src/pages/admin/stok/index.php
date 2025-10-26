@@ -22,7 +22,6 @@ include INCLUDES_PATH . "/admin/layout/header.php";
         </svg>
         Filter
       </button>
-
       <a :href="baseUrl + '/admin/stok/form'"
         class="btn btn-accent px-5 py-2.5 w-auto rounded-lg font-semibold">
         + <span class="hidden sm:inline ml-1">Tambah perubahan stok</span>

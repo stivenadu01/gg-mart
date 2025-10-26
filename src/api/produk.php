@@ -11,12 +11,21 @@ $status = 200;
 switch ($method) {
   case 'GET':
     try {
-      // Mode: dropdown (tanpa pagination)
-      if (isset($_GET['mode']) && $_GET['mode'] === 'dropdown') {
+      if (isset($_GET['mode'])) {
         $search = trim($_GET['search'] ?? '');
-        $data = getDropdownProduk($search);
-        $res = ['success' => true, 'data' => $data];
-        break;
+        // Mode: trx (transaksi)
+        if ($_GET['mode'] == 'trx') {
+          $data = getProdukTrx($search);
+          $res = ['success' => true, 'data' => $data];
+          break;
+        }
+
+        // Mode: dropdown (tanpa pagination)
+        if ($_GET['mode'] === 'dropdown') {
+          $data = getDropdownProduk($search);
+          $res = ['success' => true, 'data' => $data];
+          break;
+        }
       }
 
       // Mode: detail produk
