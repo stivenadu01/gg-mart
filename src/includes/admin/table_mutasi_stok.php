@@ -4,6 +4,7 @@
       <table class="app-table text-gray-700">
         <thead>
           <tr>
+            <th>#</th>
             <th>Tanggal</th>
             <th>Nama Produk</th>
             <th>Masuk/Keluar</th>
@@ -14,17 +15,19 @@
           </tr>
         </thead>
         <tbody>
-          <template x-for="ms in mutasiStok" :key="ms.id_mutasi">
+          <template x-for="ms,i in mutasiStok" :key="ms.id_mutasi">
             <tr>
+              <!-- NO -->
+              <td x-text="i + 1 + (pagination.page-1)*pagination.limit"></td>
               <td x-text="formatDateTime(ms.tanggal)"></td>
               <td x-text="ms.nama_produk"></td>
               <td class="text-right text-xs">
-                <span :class="ms.type == 'masuk' ? 'bg-green-100 text-green-500 border-green-500' : 'bg-red-100 border-red-500 text-red-500'" class="uppercase fontme font-medium px-2 py-1 rounded-md border" x-text="ms.type + ' ' + ms.jumlah + ' ' + ms.satuan_dasar"></span>
+                <span :class="ms.type == 'masuk' ? 'bg-green-500/10 text-green-600 border-green-500' : 'bg-red-500/10 border-red-500 text-red-600'" class="uppercase fontme font-medium px-2 py-1 rounded-md border" x-text="ms.type + ' ' + ms.jumlah + ' ' + ms.satuan_dasar"></span>
               </td>
               <td class="text-right text-xs">
                 <template x-if="ms.type == 'keluar'"> <span> - </span> </template>
                 <template x-if="ms.type == 'masuk'">
-                  <span :class="`${ms.sisa_stok < 5 ? 'bg-red-100 text-red-500 border-red-500' : ms.sisa_stok == ms.jumlah ? 'bg-green-100 text-green-500 border-green-500' : 'bg-yellow-100 text-yellow-500 border-yellow-500'}`" class="border uppercase font-medium px-2 py-1 rounded-md" x-text="'Tersisa ' + ms.sisa_stok + ' ' + ms.satuan_dasar"></span>
+                  <span :class="`${ms.sisa_stok < 5 ? 'bg-red-500/10 text-red-500 border-red-600' : ms.sisa_stok == ms.jumlah ? 'bg-green-500/10 text-green-600 border-green-500' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500'}`" class="border uppercase font-medium px-2 py-1 rounded-md" x-text="'Tersisa ' + ms.sisa_stok + ' ' + ms.satuan_dasar"></span>
                 </template>
               </td>
               <td class="text-right">
@@ -55,5 +58,27 @@
         </tbody>
       </table>
     </div>
+
+    <!-- PAGINATION -->
+    <template x-if="!loading && mutasiStok.length > 0">
+      <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-gray-100 gabg-gray-50 rounded-b-xl">
+        <p class="text-sm text-gray-500" x-text="`Menampilkan ${mutasiStok.length} dari ${pagination.total} data`"></p>
+        <div class="flex flex-wrap gap-2">
+          <button @click="prevPage" :disabled="pagination.page === 1"
+            class="btn px-3 py-1 w-auto shadow-none bg-gray-100 text-gray-700 disabled:opacity-40 hover:bg-gray-200">‹</button>
+
+          <template x-for="n in pagination.total_pages" :key="n">
+            <button @click="goPage(n)"
+              :class="pagination.page == n ? 'bg-gg-primary text-white shadow-sm' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'"
+              class="btn px-3 py-1 w-auto shadow-none rounded-md">
+              <span x-text="n"></span>
+            </button>
+          </template>
+
+          <button @click="nextPage" :disabled="pagination.page == pagination.total_pages"
+            class="btn px-3 py-1 w-auto shadow-none bg-gray-100 text-gray-700 disabled:opacity-40 hover:bg-gray-200">›</button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>

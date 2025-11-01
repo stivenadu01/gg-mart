@@ -11,17 +11,29 @@ include INCLUDES_PATH . "admin/layout/header.php";
     </div>
 
     <div class="flex items-center gap-3">
-      <form @submit.prevent="doSearch" class="flex items-center shadow-sm">
-        <input type="text" x-model="search" placeholder="Cari kategori..."
-          class="">
-        <button type="submit"
-          class="bg-gg-primary hover:bg-gg-primary/80 text-white px-4 py-2.5 rounded-r-lg font-medium">Cari</button>
+      <!-- SEARCH -->
+      <form @submit.prevent="doSearch()">
+        <div class="relative">
+          <input type="text" id="filter_search" x-model="search"
+            placeholder="Cari kategori..."
+            class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
+          <span>
+            <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer">
+              <svg class="w-4 h-4 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </span>
+        </div>
       </form>
 
       <a :href="baseUrl + '/admin/kategori/form?act=tambah'"
         class="btn btn-accent w-auto py-1.5">
-        <span class="text-lg">+</span>
-        <span class="hidden md:inline">Tambah Kategori</span>
+        <span class="me-1">+</span>
+        <span class="hidden md:inline me-1">Tambah</span>Kategori
       </a>
     </div>
   </div>

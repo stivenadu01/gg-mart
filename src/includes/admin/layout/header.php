@@ -6,8 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="shortcut icon" href="<?= ASSETS_URL . 'favicon.ico' ?>" type="image/x-icon">
   <title><?= $pageTitle ?> | GG MART | Toko Pangan</title>
-  <!-- <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/alpinejs" defer></script> -->
+  <!-- <script src="https://unpkg.com/alpinejs" defer></script>  -->
   <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/app.css">
   <script src="<?= ASSETS_URL . '/js/cdn.min.js' ?>" defer></script>
   <link rel="manifest" href="<?= BASE_URL . '/manifest.json' ?>">
@@ -25,7 +24,7 @@
   }"
   x-on:keydown.window="
     if($event.key === 'Escape') { fullscreen = false;}
-    if ($event.ctrlKey && $event.shiftKey && $event.key === 'F') {
+    if ($event.key === 'F') {
       $event.preventDefault();
       fullscreen = !fullscreen;
     }

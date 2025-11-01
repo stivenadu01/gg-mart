@@ -83,22 +83,33 @@
     animation: fadeIn 0.4s ease-out both;
   }
 
-  /* Biarkan custom-scrollbar tetap sama */
+  /* custom-scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
+    width: 6px;
+    height: 6px
   }
 
+  /* Track (jalur scrollbar) */
   .custom-scrollbar::-webkit-scrollbar-track {
     background-color: #f3f4f6;
+    border-radius: 9999px;
   }
 
+  /* Thumb (bagian yang bisa digeser) */
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background-color: #9ca3af;
     border-radius: 9999px;
+    transition: background-color 0.2s;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: #6b7280;
   }
+
+  /* BONUS: buat area X-nya sedikit lebih empuk untuk mouse */
+  .custom-scrollbar {
+    scrollbar-color: #9ca3af #f3f4f6;
+    /* untuk Firefox */
+    scrollbar-width: thin;
+    overflow-x: auto; }
 }

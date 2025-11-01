@@ -4,15 +4,16 @@ models('DetailTransaksi');
 models('Produk');
 models('User');
 
-$id = $_GET['id_transaksi'] ?? 0;
-$trx = findTransaksi($id);
+$kode = $_GET['k'] ?? 0;
+$trx = findTransaksi($kode);
 
 if (!$trx) {
   echo "<h1>Transaksi tidak ditemukan.</h1>";
+  redirect_back('');
   exit;
 }
 
-$detail = getDetailTransaksi($id);
+$detail = getDetailTransaksi($kode);
 $user = findUser($trx['id_user']);
 $tanggal = date('d/m/Y H:i', strtotime($trx['tanggal_transaksi']));
 ?>
@@ -78,10 +79,10 @@ $tanggal = date('d/m/Y H:i', strtotime($trx['tanggal_transaksi']));
   </style>
 </head>
 
-<body onload="window.print()">
+<body onload="print()">
 
-  <h2>GG-MART</h2>
-  <p>Jl. Pelayanan Kasih No. 12<br>Telp: (0380) 123456</p>
+  <h2>GG MART</h2>
+  <p>Jl. Perintis Kemerdekaan, Klp. Lima, Kec. Klp. Lima, Kota Kupang, Nusa Tenggara Tim. 85228.<br>Telp: (0380) 123456</p>
   <hr>
 
   <p><strong>Kode Transaksi:</strong> <?= $trx['kode_transaksi'] ?><br>
@@ -90,7 +91,6 @@ $tanggal = date('d/m/Y H:i', strtotime($trx['tanggal_transaksi']));
     <strong>Metode:</strong> <?= htmlspecialchars($trx['metode_bayar']) ?>
   </p>
   <hr>
-
   <table>
     <tbody>
       <?php foreach ($detail as $d): ?>
@@ -118,7 +118,16 @@ $tanggal = date('d/m/Y H:i', strtotime($trx['tanggal_transaksi']));
 
 </body>
 <script>
-  window.onafterprint = () => window.close();
+  // window.onload = () => {
+  //   window.print();
+  //   if (document.referrer) window.location.href = document.referrer;
+  //   window.history.back();
+  // }
+  window.onafterprint = () => {
+    if (document.referrer) window.location.href = document.referrer;
+    // window.history.back();
+    window.close();
+  };
 </script>
 
 </html>

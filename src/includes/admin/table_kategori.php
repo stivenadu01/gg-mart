@@ -4,7 +4,7 @@
       <table class="app-table">
         <thead>
           <tr>
-            <th class="w-1">No</th>
+            <th class="w-1">#</th>
             <th>Nama Kategori</th>
             <th>Deskripsi</th>
             <th class="w-1 text-center">Aksi</th>

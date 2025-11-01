@@ -78,9 +78,7 @@ const kelolaStokPage = () => ({
 
     if (data.success) {
       showFlash(data.message);
-      setTimeout(() => {
-        this.fetchMutasiStok(this.pagination.page);
-      }, 1000);
+      this.fetchMutasiStok(this.pagination.page);
     } else {
       showFlash(data.message, 'error');
     }

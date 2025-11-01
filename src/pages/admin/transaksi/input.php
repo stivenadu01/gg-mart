@@ -10,12 +10,12 @@ include INCLUDES_PATH . "admin/layout/header.php";
       <div class="mb-4 bg-white pb-4 border-b border-gray-100">
         <input id="searchProduk"
           type="text"
-          placeholder="Cari Produk..."
+          placeholder="Cari Produk...  [ctrl+k]"
           autofocus
           x-model="search"
           class="p-5 w-full md:p-6 text-2xl font-semibold tracking-wide input-trx
        bg-white border-gray-950 shadow-none border placeholder-gray-400 text-gray-900 "
-          @input.debounce.300="fetchProduk()"
+          @input.debounce.200="fetchProduk()"
           @keydown.enter.prevent="tambahProdukDariInput()">
       </div>
 
@@ -140,7 +140,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
           </template>
           <template x-if="!submitting">
             <div class="space-y-1 mt-1">
-              <button @click="simpanTransaksi(false)"
+              <button @click="simpanTransaksi(true)"
                 :disabled="keranjang.length === 0"
                 class="w-full bg-green-600 hover:bg-green-700 text-white font-extrabold py-2.5 rounded-xl shadow-lg transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-base uppercase tracking-wider">
                 <svg class="w-5 h-5 mr-2 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -163,6 +163,7 @@ include INCLUDES_PATH . "admin/layout/header.php";
       </div>
     </div>
   </div>
+  <div class="printFrame hidden"></div>
 </div>
 
 <script src="<?= ASSETS_URL . '/js/transaksiPage.js' ?>"></script>

@@ -24,7 +24,8 @@ include INCLUDES_PATH . "/admin/layout/header.php";
       </button>
       <a :href="baseUrl + '/admin/stok/form'"
         class="btn btn-accent px-5 py-2.5 w-auto rounded-lg font-semibold">
-        + <span class="hidden sm:inline ml-1">Tambah perubahan stok</span>
+        <span class="me-1">+</span>
+        <span class="hidden sm:inline me-1">Tambah</span>Perubahan Stok
       </a>
     </div>
   </div>
@@ -34,26 +35,30 @@ include INCLUDES_PATH . "/admin/layout/header.php";
     x-transition
     class="bg-white rounded-xl shadow-md p-4 border border-gray-100 animate-fade">
 
-    <form @submit.prevent="applyFilter()" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
 
       <div class="lg:col-span-3">
-        <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Produk</label>
-        <div class="relative">
-          <input type="text" id="filter_search" x-model="filter.search"
-            placeholder="Cari Produk"
-            class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
-          <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
+        <form @submit.prevent="applyFilter()">
+          <label for="filter_search" class="text-xs font-semibold text-gray-600 mb-1 block">Cari Produk</label>
+          <div class="relative">
+            <input type="text" id="filter_search" x-model="filter.search"
+              placeholder="Cari Produk"
+              class="w-full form-input h-10 border border-gray-300 rounded-lg pl-10 pr-4 text-sm focus:border-gg-primary focus:ring-gg-primary">
+            <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer">
+              <svg class="w-4 h-4 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="sm:col-span-1">
         <label for="filter_type" class="text-xs font-semibold text-gray-600 mb-1 block">Tipe</label>
-        <select id="filter_type" x-model="filter.type"
+        <select id="filter_type" x-model="filter.type" @change="applyFilter()"
           class="w-full form-select h-10 border border-gray-300 rounded-lg focus:border-gg-primary focus:ring-gg-primary text-sm">
           <option value="">Semua</option>
           <option value="masuk">Stok Masuk</option>
@@ -63,15 +68,6 @@ include INCLUDES_PATH . "/admin/layout/header.php";
 
       <!-- BUTTONS -->
       <div class="col-span-4 lg:col-span-2 flex gap-3 pt-2 lg:mt-0 border-gray-300 border-t lg:border-none">
-        <button type="submit"
-          class="btn btn-primary flex items-center justify-center gap-2 h-10 px-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Terapkan</span>
-        </button>
-
         <button type="button"
           @click="resetFilter"
           :disabled="!filter.search && filter.type === ''"
@@ -84,7 +80,7 @@ include INCLUDES_PATH . "/admin/layout/header.php";
           <span>Reset</span>
         </button>
       </div>
-    </form>
+    </div>
   </div>
 
   <!-- LOADING -->

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/bootstrap.php';
 
-$page = $_GET['page'] ?? 'home';
+$page = $_GET['page'] ?? 'user/home';
 $page = rtrim($page, '/');
 
 // kalau dimulai dari api --> load src/api

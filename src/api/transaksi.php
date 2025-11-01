@@ -10,19 +10,31 @@ $res = [];
 $status = 200;
 
 switch ($method) {
-  // GET /api/transaksi?=
+  // GET /api/transaksi?
   case 'GET':
     try {
-      // Mode: list + pagination + search
+      // detail transaksi
+      if ($kode_transaksi && isset($_GET['mode']) && $_GET['mode'] == 'detail') {
+        $data = findTransaksi($conn->real_escape_string($kode_transaksi));
+        $detail = getDetailTransaksi($conn->real_escape_string($kode_transaksi));
+        $data['detail'] = $detail;
+        $res = ['success' => true, 'data' => $data];
+        break;
+      }
+      // Mode: list
       $page   = max(1, intval($_GET['halaman'] ?? 1));
       $limit  = max(1, intval($_GET['limit'] ?? 10));
-      $search = trim($_GET['search'] ?? '');
+      $search = trim($_GET['search'] ?? null);
+      $start  = $_GET['start'] ?? null;
+      $end    = $_GET['end'] ?? null;
+      $metode = $_GET['metode'] ?? null;
 
-      [$data, $total] = gettransaksiList($page, $limit, $search);
+      [$data, $total, $totalSummary] = getTransaksiList($page, $limit, $search, $start, $end, $metode);
 
       $res = [
         'success' => true,
         'data' => $data,
+        'totalSummary' => $totalSummary,
         'pagination' => [
           'page' => $page,
           'limit' => $limit,
@@ -51,9 +63,14 @@ switch ($method) {
       // handle detail transaksi
       $data_detail_transaksi = [];
       $total_pokok = 0;
+      $db_total_harga = 0;
 
-      // /** @var array $input_data */
+      /** @var array $input_data */
       foreach ($input_data['detail'] as $item) {
+        // pastikan total harga di frondend sesuai dengan di db
+        $db_harga = findProduk($item['kode_produk'])['harga_jual'];
+        $db_total_harga += $db_harga * $item['jumlah'];
+
         // ambil harga pokok dari batch stok (paling lama, sisa > 0)
         $stok = getMutasiByProduk($item['kode_produk']);
         if (!$stok) throw new Exception("Stok Tidak Ada", 422);
@@ -90,6 +107,9 @@ switch ($method) {
         if (!ubahTerjualProduk($item['kode_produk'], $item['jumlah']));
       }
 
+      if ($db_total_harga != $input_data['total_harga']) {
+        throw new Exception("Total harga tidak sama dengan sistem", 400);
+      }
       $input_data['total_pokok'] = $total_pokok;
       if (!tambahTransaksi($input_data));
       foreach ($data_detail_transaksi as $d) {

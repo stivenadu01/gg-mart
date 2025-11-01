@@ -8,10 +8,9 @@ function transaksiPage() {
     submitting: false,
 
     async fetchProduk() {
-      if (this.search == '') return;
+      if (!this.search.trim()) return;
       const res = await fetch(`${baseUrl}/api/produk?mode=trx&search=${encodeURIComponent(this.search)}`);
       const data = await res.json();
-      console.log(data.data);
       if (data.success) this.produk = data.data;
     },
 
@@ -50,6 +49,7 @@ function transaksiPage() {
           stok: p.stok // simpan stok di keranjang
         });
       }
+      this.produk = [];
       this.hitungTotal();
     },
 
@@ -97,7 +97,6 @@ function transaksiPage() {
           })),
           status: 'selesai'
         };
-        console.log('Payload transaksi:', payload);
         const res = await fetch(`${baseUrl}/api/transaksi`, {
           method: 'POST',
           headers: {
@@ -112,14 +111,10 @@ function transaksiPage() {
           showFlash('Transaksi berhasil disimpan!');
 
           if (cetakStruk) {
-            if (window.electronAPI) {
-              window.electronAPI.printStruk(res.data.kode_transaksi);
-            } else {
-              // fallback kalau dibuka di browser biasa
-              window.open(`${baseUrl}/admin/transaksi/print?kode=${res.data.kode_transaksi}`, '_blank');
-            }
+            // this.printTransaksi(data.data)
+            // window.location.href = `${baseUrl}/admin/transaksi/print?k=${data.data}`;
+            window.open(`${baseUrl}/admin/transaksi/print?k=${data.data}`, '_blank');
           }
-
           document.getElementById('searchProduk').focus();
         } else {
           showFlash('Gagal simpan: ' + data.message, 'error');
@@ -129,6 +124,16 @@ function transaksiPage() {
       } finally {
         this.submitting = false;
       }
-    }
+    },
+
+    // printTransaksi(transaksiId) {
+    //   const iframe = document.getElementById('printFrame');
+    //   iframe.src = `${baseUrl}/admin/transaksi/print?k=${transaksiId}`;
+
+    //   iframe.onload = () => {
+    //     iframe.contentWindow.focus();
+    //     iframe.contentWindow.print();
+    //   };
+    // }
   }
 }

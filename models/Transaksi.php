@@ -1,6 +1,6 @@
 <?php
 
-function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null, $order_by = 'tanggal_transaksi', $order_dir = 'DESC')
+function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null, $end = null, $metode = null)
 {
   global $conn;
   $offset = ($page - 1) * $limit;
@@ -13,8 +13,14 @@ function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null,
 
   if ($start && $end) {
     $safeStart = $conn->real_escape_string($start);
-    $safeEnd = $conn->real_escape_string($end);
+    $safeEnd   = $conn->real_escape_string($end);
     $conditions[] = "DATE(t.tanggal_transaksi) BETWEEN '$safeStart' AND '$safeEnd'";
+  } elseif ($start) {
+    $safeStart = $conn->real_escape_string($start);
+    $conditions[] = "DATE(t.tanggal_transaksi) >= '$safeStart'";
+  } elseif ($end) {
+    $safeEnd = $conn->real_escape_string($end);
+    $conditions[] = "DATE(t.tanggal_transaksi) <= '$safeEnd'";
   }
 
   if ($metode) {
@@ -31,14 +37,27 @@ function getTransaksiList($page = 1, $limit = 10, $search = null, $start = null,
       FROM transaksi t
       LEFT JOIN user u ON t.id_user = u.id_user
       $where
-      ORDER BY t.$order_by $order_dir
+      ORDER BY t.tanggal_transaksi DESC
       LIMIT $limit OFFSET $offset
     ");
 
   $data = [];
   while ($row = $res->fetch_assoc()) $data[] = $row;
 
-  return [$data, $total];
+  // Hitung total keseluruhan
+  $sqlSum = "
+    SELECT 
+      SUM(t.total_pokok) AS pokok,
+      SUM(t.total_harga) AS jual,
+      SUM(t.total_harga - t.total_pokok) AS laba
+    FROM transaksi t
+    LEFT JOIN user u ON t.id_user = u.id_user
+    $where
+  ";
+  $totalSummary = $conn->query($sqlSum)->fetch_assoc() ?? ['pokok' => 0, 'jual' => 0, 'laba' => 0];
+
+
+  return [$data, $total, $totalSummary];
 }
 
 function findTransaksi($kode_transaksi)

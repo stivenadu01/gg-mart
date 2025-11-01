@@ -59,31 +59,8 @@ include INCLUDES_PATH . "/admin/layout/header.php";
         <div class="space-y-4 animate-fade">
           <h2 class="text-lg font-semibold text-gray-700">2️⃣ Detail Produk</h2>
           <div>
-            <label for="satuan_dasar">Pilih Satuan Dasar</label>
-            <select x-model="form.satuan_dasar" id="satuan_dasar" class="rounded p-2 w-full">
-              <option value="">--- Pilih Satuan Dasar ---</option>
-              <option value="pcs">Pcs (Satuan)</option>
-              <option value="buah">Buah</option>
-              <option value="unit">Unit</option>
-              <option value="pack">Pack</option>
-              <option value="lusin">Lusin</option>
-              <option value="bungkus">Bungkus</option>
-              <option value="kotak">Kotak</option>
-              <option value="cup">Cup</option>
-              <option value="porsi">Porsi</option>
-              <option value="botol">Botol</option>
-              <option value="kaleng">Kaleng</option>
-              <option value="liter">Liter</option>
-              <option value="ml">Mililiter (ml)</option>
-              <option value="kg">Kilogram (Kg)</option>
-              <option value="gram">Gram</option>
-              <option value="ons">Ons (100gr)</option>
-              <option value="galon">Galon</option>
-              <option value="lembar">Lembar</option>
-              <option value="set">Set</option>
-              <option value="box">Box</option>
-              <option value="sachet">Sachet</option>
-            </select>
+            <label for="satuan_dasar">Satuan Dasar</label>
+            <input type="text" x-model="form.satuan_dasar" id="satuan_dasar" class="" placeholder="Contoh: Pcs, Kg, Botol, Buah dll ">
           </div>
 
           <div>

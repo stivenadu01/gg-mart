@@ -5,17 +5,20 @@
       <table class="app-table min-w-full text-sm text-gray-700">
         <thead class="sticky top-0 bg-gray-100">
           <tr>
-            <th class="text-left w-[280px]">Produk</th>
-            <th class="text-left">Harga Jual</th>
+            <th>#</th>
+            <th class=" w-[280px]">Produk</th>
+            <th>Harga Jual</th>
             <th class="text-center">Stok & Terjual</th>
-            <th class="text-left hidden md:block">Deskripsi</th>
+            <th class="hidden md:block">Deskripsi</th>
             <th class="text-center">Aksi</th>
           </tr>
         </thead>
 
         <tbody>
-          <template x-for="p in produk" :key="p.kode_produk">
+          <template x-for="p, i in produk" :key="p.kode_produk">
             <tr class="border-b hover:bg-gray-50 transition">
+              <!-- NO -->
+              <td x-text="i + 1 + (pagination.page-1)*pagination.limit"></td>
               <!-- PRODUK -->
               <td class="p-3">
                 <div class="flex items-center gap-4">
@@ -38,9 +41,9 @@
               <td class="text-center">
                 <div class="flex flex-col justify-center items-center gap-y-2">
                   <span class="w-full px-1 py-0.5 rounded-md text-xs font-semibold border"
-                    :class="p.stok <= 5 ? 'bg-red-500/15 border-red-500 text-red-500' : 'bg-gg-primary/15 border-gg-primary text-gg-primary'"
+                    :class="p.stok <= 5 ? 'bg-red-500/10 border-red-500 text-red-600' : 'bg-gg-primary/10 border-gg-primary text-gg-primary'"
                     x-text="`Tersedia: ${p.stok} ${p.satuan_dasar}`"></span>
-                  <span class="w-full px-1 py-0.5 rounded-md text-xs font-semibold bg-blue-500/15 text-blue-500 border border-blue-500"
+                  <span class="w-full px-1 py-0.5 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-600 border border-blue-500"
                     x-text="`Terjual: ${p.terjual} ${p.satuan_dasar}`"></span>
                 </div>
               </td>
